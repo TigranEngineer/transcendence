@@ -11,21 +11,31 @@ export class AuthService {
   }
 
   async register(username: string, email: string, password: string) {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.prisma.user.create({
-      data: { username, email, password: hashedPassword },
-    });
-    const token = this.fastify.jwt.sign({ id: user.id });
-    return { token, user: { id: user.id, username: user.username, email: user.email } };
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await this.prisma.user.create({
+        data: { username, email, password: hashedPassword },
+      });
+      const token = this.fastify.jwt.sign({ id: user.id });
+      return { token, user: { id: user.id, username: user.username, email: user.email } };
+    } catch (error) {
+      console.error('Prisma error:', error);
+      throw error;
+    }
   }
 
   async login(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (user && await bcrypt.compare(password, user.password)) {
-      const token = this.fastify.jwt.sign({ id: user.id });
-      return { token, user: { id: user.id, username: user.username, email: user.email } };
+    try {
+      const user = await this.prisma.user.findUnique({ where: { email } });
+      if (user && await bcrypt.compare(password, user.password)) {
+        const token = this.fastify.jwt.sign({ id: user.id });
+        return { token, user: { id: user.id, username: user.username, email: user.email } };
+      }
+      throw new Error('Invalid credentials');
+    } catch (error) {
+      console.error('Prisma error:', error);
+      throw error;
     }
-    throw new Error('Invalid credentials');
   }
 
   async logout() {
