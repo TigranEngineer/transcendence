@@ -1,0 +1,11 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./user.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

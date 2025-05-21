@@ -1,16 +1,44 @@
 version: '3.8'
 
 services:
-  backend:
+  user-service:
     build:
-      context: ./backend
+      context: ./user-service
       dockerfile: Dockerfile
     environment:
       JWT_SECRET: "your-secret-key"
     ports:
-      - "3000:3000"
+      - "3002:3000"
     volumes:
-      - ./backend:/app
+      - ./user-service:/app
+      - /app/node_modules
+    command: >
+      sh -c "npm start"
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: "your-secret-key"
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    command: >
+      sh -c "npm start"
+
+  chat-service:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: "your-secret-key"
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./chat-service:/app
       - /app/node_modules
     command: >
       sh -c "npm start"
@@ -20,12 +48,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "3003:3001"
     depends_on:
-      - backend
-
-# volumes:
-#   - db_data:/app/dev.db
-volumes:
-  db_data:
-  # Removed db_data since SQLite is file-based
+      - user-service
+      - auth-service
+      - chat-service

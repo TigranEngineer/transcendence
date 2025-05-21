@@ -5,7 +5,6 @@ import { register } from '../services/api';
 import { RegisterRequest } from '../types/auth';
 
 const Register: React.FC = () => {
-  console.log('flan');
   const navigate = useNavigate();
   const [formData, setFormData] = useState<RegisterRequest>({
     username: '',

@@ -1,0 +1,11 @@
+datasource db {
+    provider = "sqlite"
+    url      = "file:./auth.db"
+}
+
+model UserAuth {
+    id       Int    @id @default(autoincrement())
+    email    String @unique
+    password String
+    userId   Int    @unique
+}
