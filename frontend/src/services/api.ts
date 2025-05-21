@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { RegisterRequest, LoginRequest, AuthResponse, UserResponse } from '../types/auth';
 
-const USER_SERVICE_URL = 'http://localhost:3002';
+const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
 const CHAT_SERVICE_URL = 'http://localhost:4000';
 

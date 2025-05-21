@@ -8,12 +8,11 @@ services:
     environment:
       JWT_SECRET: "your-secret-key"
     ports:
-      - "3002:3000"
+      - "3000:3000"
     volumes:
       - ./user-service:/app
-      - /app/node_modules
-    command: >
-      sh -c "npm start"
+    # command: >
+    #   sh -c "npm start"
 
   auth-service:
     build:
@@ -25,9 +24,8 @@ services:
       - "3001:3001"
     volumes:
       - ./auth-service:/app
-      - /app/node_modules
-    command: >
-      sh -c "npm start"
+    # command: >
+    #   sh -c "npm start"
 
   chat-service:
     build:
@@ -39,16 +37,15 @@ services:
       - "4000:4000"
     volumes:
       - ./chat-service:/app
-      - /app/node_modules
-    command: >
-      sh -c "npm start"
+    # command: >
+    #   sh -c "npm start"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3003:3001"
+      - "3003:3003"
     depends_on:
       - user-service
       - auth-service

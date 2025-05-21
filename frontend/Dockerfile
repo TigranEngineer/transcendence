@@ -29,7 +29,7 @@ WORKDIR /app
 COPY --from=build /app/build ./build
 
 # Expose the port the frontend runs on
-EXPOSE 3001
+EXPOSE 3003
 
 # Serve the app
-CMD ["serve", "-s", "build", "-l", "3001"]
+CMD ["serve", "-s", "build", "-l", "3003"]
