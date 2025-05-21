@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./user-service:/app
+      - ./database/user-service/prisma:/app/prisma
     # command: >
     #   sh -c "npm start"
 
@@ -23,7 +23,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./auth-service:/app
+      - ./database/auth-service/prisma:/app/prisma
     # command: >
     #   sh -c "npm start"
 
@@ -36,7 +36,7 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./chat-service:/app
+      - ./database/chat-service/prisma:/app/prisma
     # command: >
     #   sh -c "npm start"
 
