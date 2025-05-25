@@ -20,6 +20,7 @@ const Login: React.FC = () => {
     try {
       const response = await login(formData);
       localStorage.setItem('token', response.token);
+      localStorage.setItem('id', response.user.id.toString());
       toast.success('Login successful');
       navigate('/profile');
     } catch (error: any) {

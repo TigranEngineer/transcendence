@@ -1,5 +1,6 @@
 version: '3.8'
 
+
 services:
   user-service:
     build:
@@ -7,10 +8,13 @@ services:
       dockerfile: Dockerfile
     environment:
       JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./prisma/data.db"
     ports:
       - "3000:3000"
+    networks:
+      - app-network
     volumes:
-      - ./database/user-service/prisma:/app/prisma
+      - ./database/data.db:/app/data
     # command: >
     #   sh -c "npm start"
 
@@ -20,10 +24,13 @@ services:
       dockerfile: Dockerfile
     environment:
       JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./prisma/data.db"
     ports:
       - "3001:3001"
+    networks:
+      - app-network
     volumes:
-      - ./database/auth-service/prisma:/app/prisma
+      - ./database/data.db:/app/prisma/data.db
     # command: >
     #   sh -c "npm start"
 
@@ -33,12 +40,15 @@ services:
       dockerfile: Dockerfile
     environment:
       JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./prisma/data.db"
     ports:
       - "4000:4000"
+    networks:
+      - app-network
     volumes:
-      - ./database/chat-service/prisma:/app/prisma
-    # command: >
-    #   sh -c "npm start"
+      - ./database/data.db:/app/prisma/data.db
+  #   command: >
+  #     sh -c "npm start"
 
   frontend:
     build:
@@ -46,7 +56,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3003:3003"
+    networks:
+      - app-network
     depends_on:
       - user-service
       - auth-service
       - chat-service
+
+volumes:
+  database:
+
+networks:
+  app-network:
+    driver: bridge

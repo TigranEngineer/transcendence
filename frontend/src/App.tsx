@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import Chat from './components/Chat'
 
 const App: React.FC = () => {
   return (
@@ -12,7 +13,10 @@ const App: React.FC = () => {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/profile/:username" element={<Profile />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>

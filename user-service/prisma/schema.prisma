@@ -4,12 +4,58 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./user.db"
+  url      = env("DATABASE_URL")
+}
+
+model UserAuth {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  userId   Int    @unique
 }
 
 model User {
+  id               Int       @id @default(autoincrement())
+  username         String    @unique
+  email            String    @unique
+  profilePhoto     String?
+  createdAt        DateTime  @default(now())
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  friendsAsUser    Friends[] @relation("UserToFriends")
+  friendsAsFriend  Friends[] @relation("FriendToFriends")
+  blockedAsBlocker Blocked[] @relation("UserBlocked")
+  blockedAsBlocked Blocked[] @relation("UserBlockedBy")
+}
+
+model Friends {
   id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
+  userId    Int
+  friendId  Int
+  user      User     @relation("UserToFriends", fields: [userId], references: [id])
+  friend    User     @relation("FriendToFriends", fields: [friendId], references: [id])
   createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+}
+
+model Blocked {
+  id        Int      @id @default(autoincrement())
+  blockerId Int
+  blockedId Int
+  blocker   User     @relation("UserBlocked", fields: [blockerId], references: [id])
+  blocked   User     @relation("UserBlockedBy", fields: [blockedId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  senderId   Int
+  receiverId Int
+  createdAt  DateTime @default(now())
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }

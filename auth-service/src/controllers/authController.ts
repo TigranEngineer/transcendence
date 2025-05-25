@@ -3,10 +3,10 @@ import { AuthService } from '../services/authService';
 
 export const authController = {
     async register(req: FastifyRequest, reply: FastifyReply) {
-        const { email, password } = req.body as { email: string; password: string };
+        const { username, email, password } = req.body as { username: string; email: string; password: string };
         const authService = new AuthService(req.server);
         try {
-            const result = await authService.register(email, password);
+            const result = await authService.register(username, email, password);
             return reply.status(201).send(result);
         } catch (error) {
             return reply.status(500).send({ error: 'Registration failed' });

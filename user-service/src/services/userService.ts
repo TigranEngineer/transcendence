@@ -1,5 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
+export class CustomError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CustomError';
+  }
+}
 export class UserService {
   private prisma: PrismaClient;
 
@@ -8,25 +14,70 @@ export class UserService {
   }
 
   async createUser(username: string, email: string) {
-    try {
-      const user = await this.prisma.user.create({
-        data: { username, email },
-      });
-      return user;
-    } catch (error) {
-      console.error('Prisma error creating user:', error);
-      throw error;
-    }
+  try {
+    const user = await this.prisma.user.create({
+      data: { username, email },
+    });
+    return user;
+  } catch (error) {
+    console.error('Prisma error creating user:', error);
+    throw error;
   }
+}
 
   async getUserById(id: number) {
-    try {
-      const user = await this.prisma.user.findUnique({ where: { id } });
-      if (!user) throw new Error('User not found');
-      return user;
-    } catch (error) {
-      console.error('Prisma error getting user:', error);
-      throw error;
-    }
+  try {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new Error('User not found');
+    return user;
+  } catch (error) {
+    console.error('Prisma error getting user:', error);
+    throw error;
   }
+}
+
+  async getUserByUsername(username: string) {
+  try {
+    const user = await this.prisma.user.findUnique({ where: { username } });
+    if (!user) throw new Error('User not found');
+    return user;
+  } catch (error) {
+    console.error('Prisma error getting user:', error);
+    throw error;
+  }
+}
+
+  async addFriend(userId: number, friendId: number) {
+  try {
+    const existingFriendship = await this.prisma.friends.findUnique({
+      where: { userId_friendId: { userId, friendId } },
+    });
+    if (existingFriendship) throw new CustomError('Already blocked');
+
+    await this.prisma.friends.create({
+      data: { userId, friendId, createdAt: new Date() },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Add friend failed:', error);
+    throw error;
+  }
+}
+
+  async blockUser(blockerId: number, blockedId: number) {
+  try {
+    const existingBlock = await this.prisma.blocked.findUnique({
+      where: { blockerId_blockedId: { blockerId, blockedId } },
+    });
+    if (existingBlock) throw new CustomError('Already blocked');
+
+    await this.prisma.blocked.create({
+      data: { blockerId, blockedId, createdAt: new Date() },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Block user failed:', error);
+    throw error;
+  }
+}
 }

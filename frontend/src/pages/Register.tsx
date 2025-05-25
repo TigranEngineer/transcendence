@@ -27,8 +27,9 @@ const Register: React.FC = () => {
       const response = await register(formData);
       console.log('Registration successful:', response); // Debug log
       localStorage.setItem('token', response.token);
+      localStorage.setItem('id', response.user.id.toString());
       toast.success('Registration successful');
-      navigate('/profile');
+      navigate(`/profile/${localStorage.getItem('id')}`);
     } catch (error: any) {
       console.error('Registration failed in component:', error.response?.data || error.message); // Debug log
       toast.error(error.response?.data?.error || 'Registration failed');

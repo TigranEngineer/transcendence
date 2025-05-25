@@ -64,10 +64,10 @@ export const logout = async (): Promise<void> => {
   }
 };
 
-export const getUser = async (token: string): Promise<UserResponse> => {
+export const getUser = async (token: string, id: string): Promise<UserResponse> => {
   console.log('Sending getUser request with token:', token);
   try {
-    const response = await userApi.get<UserResponse>('/api/users', {
+    const response = await userApi.get<UserResponse>(`/api/users/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     console.log('getUser response:', response.data);
@@ -76,6 +76,24 @@ export const getUser = async (token: string): Promise<UserResponse> => {
     console.error('getUser error:', error.response?.data || error.message);
     throw error;
   }
+};
+
+export const getUserByUsername = async (token: string, username: string): Promise<UserResponse> => {
+  return await userApi.get<UserResponse>(`/api/users/username/${username}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => res.data);
+};
+
+export const addFriend = async (id: string, friendId: number, token: string): Promise<{ success: boolean; error?: string }> => {
+  return await userApi.post(`/api/users/friends`, { id, friendId }, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => res.data).catch(err => ({ success: false, error: err.response?.data?.error || 'Unknown error' }));
+};
+
+export const blockUser = async (id: string, blockedId: number, token: string): Promise<{ success: boolean; error?: string }> => {
+  return await userApi.post(`/api/users/block`, { id, blockedId }, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => res.data).catch(err => ({ success: false, error: err.response?.data?.error || 'Unknown error' }));
 };
 
 userApi.interceptors.request.use((config) => {

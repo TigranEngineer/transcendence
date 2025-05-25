@@ -23,4 +23,5 @@ export interface RegisterRequest {
     username: string;
     email: string;
     createdAt: string;
+    profilePhoto?: string;
   }

@@ -1,21 +1,87 @@
+import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
+import { WebSocket } from 'ws'; // Import WebSocket type from 'ws'
 
-export class ChatService {
-    private prisma: PrismaClient;
+const prisma = new PrismaClient();
 
-    constructor() {
-        this.prisma = new PrismaClient();
-    }
-
-    async saveChatMessage(userId: number, content: string) {
-        try {
-            const message = await this.prisma.chatMessage.create({
-                data: { userId, content },
-            });
-            return message;
-        } catch (error) {
-            console.error('Prisma error saving chat message:', error);
-            throw error;
-        }
-    }
+// Define the connection type using WebSocket from 'ws'
+interface WebSocketConnection {
+    socket: WebSocket;
 }
+
+const connections = new Map<number, WebSocketConnection>();
+
+export const chatService = {
+    registerConnection(userId: number, connection: WebSocketConnection) {
+        connections.set(userId, connection);
+    },
+
+    unregisterConnection(userId: number) {
+        connections.delete(userId);
+    },
+
+    async isBlocked(userId: number, targetId: number): Promise<boolean> {
+        try {
+            const response = await axios.get(`http://user-service:3000/users/${userId}/blocked`, {
+                params: { blockedId: targetId },
+            });
+            return response.data.isBlocked;
+        } catch (error) {
+            console.error('Error checking block status:', error);
+            return true;
+        }
+    },
+
+    async isFriend(userId: number, targetId: number): Promise<boolean> {
+        try {
+            const response = await axios.get(`http://user-service:3000/users/${userId}/friends`, {
+                params: { friendId: targetId },
+            });
+            return response.data.isFriend;
+        } catch (error) {
+            console.error('Error checking friend status:', error);
+            return false;
+        }
+    },
+
+    async handleMessage(senderId: number, receiverId: number, content: string, connection: WebSocketConnection) {
+        const isSenderBlocked = await this.isBlocked(receiverId, senderId);
+        const isReceiverBlocked = await this.isBlocked(senderId, receiverId);
+        if (isSenderBlocked || isReceiverBlocked) {
+            connection.socket.send(JSON.stringify({ error: 'Cannot send message: user is blocked' }));
+            return;
+        }
+
+        const areFriends = await this.isFriend(senderId, receiverId);
+        if (!areFriends) {
+            connection.socket.send(JSON.stringify({ error: 'Cannot send message: users are not friends' }));
+            return;
+        }
+
+        const savedMessage = await prisma.message.create({
+            data: {
+                content,
+                senderId,
+                receiverId,
+                createdAt: new Date(),
+            },
+        });
+
+        const receiverConnection = connections.get(receiverId);
+        if (receiverConnection) {
+            receiverConnection.socket.send(JSON.stringify({
+                type: 'message',
+                content,
+                senderId,
+                createdAt: savedMessage.createdAt,
+            }));
+        }
+
+        connection.socket.send(JSON.stringify({
+            type: 'message',
+            content,
+            receiverId,
+            createdAt: savedMessage.createdAt,
+        }));
+    },
+};

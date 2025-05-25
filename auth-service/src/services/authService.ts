@@ -11,10 +11,10 @@ export class AuthService {
         this.prisma = new PrismaClient();
     }
 
-    async register(email: string, password: string) {
+    async register(username: string, email: string, password: string) {
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
-            const userResponse = await axios.post('http://user-service:3000/api/users', { username: email.split('@')[0], email });
+            const userResponse = await axios.post('http://user-service:3000/api/users', { username, email });
             const userId = userResponse.data.id;
             const auth = await this.prisma.userAuth.create({
                 data: { email, password: hashedPassword, userId },
