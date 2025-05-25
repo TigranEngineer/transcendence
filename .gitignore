@@ -5,5 +5,5 @@
 */dist/
 database/*/prisma/migrations/
 database/*/prisma/*db*
-database/*db*
-database/migrations/
+database/prisma/*db*
+database/prisma/migrations/

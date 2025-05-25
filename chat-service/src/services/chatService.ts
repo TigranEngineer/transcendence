@@ -4,15 +4,10 @@ import { WebSocket } from 'ws'; // Import WebSocket type from 'ws'
 
 const prisma = new PrismaClient();
 
-// Define the connection type using WebSocket from 'ws'
-interface WebSocketConnection {
-    socket: WebSocket;
-}
-
-const connections = new Map<number, WebSocketConnection>();
+const connections = new Map<number, WebSocket>();
 
 export const chatService = {
-    registerConnection(userId: number, connection: WebSocketConnection) {
+    registerConnection(userId: number, connection: WebSocket) {
         connections.set(userId, connection);
     },
 
@@ -22,7 +17,7 @@ export const chatService = {
 
     async isBlocked(userId: number, targetId: number): Promise<boolean> {
         try {
-            const response = await axios.get(`http://user-service:3000/users/${userId}/blocked`, {
+            const response = await axios.get(`http://user-service:3000/api/users/blocked`, {
                 params: { blockedId: targetId },
             });
             return response.data.isBlocked;
@@ -34,7 +29,7 @@ export const chatService = {
 
     async isFriend(userId: number, targetId: number): Promise<boolean> {
         try {
-            const response = await axios.get(`http://user-service:3000/users/${userId}/friends`, {
+            const response = await axios.get(`http://user-service:3000/api/users/friends`, {
                 params: { friendId: targetId },
             });
             return response.data.isFriend;
@@ -44,17 +39,17 @@ export const chatService = {
         }
     },
 
-    async handleMessage(senderId: number, receiverId: number, content: string, connection: WebSocketConnection) {
+    async handleMessage(senderId: number, receiverId: number, content: string, connection: WebSocket) {
         const isSenderBlocked = await this.isBlocked(receiverId, senderId);
         const isReceiverBlocked = await this.isBlocked(senderId, receiverId);
         if (isSenderBlocked || isReceiverBlocked) {
-            connection.socket.send(JSON.stringify({ error: 'Cannot send message: user is blocked' }));
+            connection.send(JSON.stringify({ error: 'Cannot send message: user is blocked' }));
             return;
         }
 
         const areFriends = await this.isFriend(senderId, receiverId);
         if (!areFriends) {
-            connection.socket.send(JSON.stringify({ error: 'Cannot send message: users are not friends' }));
+            connection.send(JSON.stringify({ error: 'Cannot send message: users are not friends' }));
             return;
         }
 
@@ -69,19 +64,23 @@ export const chatService = {
 
         const receiverConnection = connections.get(receiverId);
         if (receiverConnection) {
-            receiverConnection.socket.send(JSON.stringify({
-                type: 'message',
-                content,
-                senderId,
-                createdAt: savedMessage.createdAt,
-            }));
+            receiverConnection.send(
+                JSON.stringify({
+                    type: 'message',
+                    content,
+                    senderId,
+                    createdAt: savedMessage.createdAt,
+                })
+            );
         }
 
-        connection.socket.send(JSON.stringify({
-            type: 'message',
-            content,
-            receiverId,
-            createdAt: savedMessage.createdAt,
-        }));
+        connection.send(
+            JSON.stringify({
+                type: 'message',
+                content,
+                receiverId,
+                createdAt: savedMessage.createdAt,
+            })
+        );
     },
 };
