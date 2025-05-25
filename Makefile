@@ -13,7 +13,7 @@ endif
 
 all: up
 
-up: db
+up:
 	@echo "$(yellow)===============================$(reset)"
 	@echo "$(yellow)======= Building images =======$(reset)"
 	@echo "$(yellow)===============================$(reset)"
@@ -93,9 +93,9 @@ npm:
 	npm i -C app-service
 	npm i -C notification-service
 
-db:
-	npm i -C database
-	cd database && npx prisma generate && npx prisma migrate dev --name init
+# db:
+# 	npm i -C database
+# 	cd database && npx prisma generate && npx prisma migrate dev --name init
 
 
 .PHONY: all up up_background down hard_down start stop remove_all re info npm
