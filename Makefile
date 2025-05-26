@@ -6,9 +6,9 @@ reset := \033[0m
 red := \033[31m
 
 ifeq ($(UNAME), Darwin)
-	DOCKER_COMPOSE = sudo docker-compose
+	DOCKER_COMPOSE = docker-compose
 else
-	DOCKER_COMPOSE = sudo docker compose
+	DOCKER_COMPOSE = docker compose
 endif
 
 all: up
@@ -69,7 +69,7 @@ stop:
 	@echo "$(red)==================================$(reset)"
 
 remove_all: hard_down
-	@sudo docker system prune -a
+	@docker system prune -a
 	@if [ -n "$(shell docker images -q)" ]; then \
     		docker rmi -f $(shell docker images -q); \
     	else \
@@ -84,10 +84,10 @@ info:
 
 npm:
 	cat .env.example > .env && cat notification-service/.env.example > notification-service/.env && cat app-service/.env.example > app-service/.env
-	sudo rm -rf app-service/dist
-	sudo rm -rf app-service/node_modules
-	sudo rm -rf notification-service/dist
-	sudo rm -rf notification-service/node_modules
+	rm -rf app-service/dist
+	rm -rf app-service/node_modules
+	rm -rf notification-service/dist
+	rm -rf notification-service/node_modules
 	npm install --prefix app-service
 	npm install --prefix notification-service
 	npm i -C app-service

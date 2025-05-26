@@ -38,6 +38,11 @@ const Profile: React.FC = () => {
     fetchUser();
   }, [navigate]);
 
+
+  const openAI = async () => {
+    navigate('/ai');
+  };
+
   const handleAddFriend = async () => {
     if (id && token && user && user.id !== parseInt(id)) {
       const result = await addFriend(id, user.id, token);
@@ -81,7 +86,7 @@ const Profile: React.FC = () => {
             </div>
           )}
           <div className="mt-4">
-            <button className="bg-blue-500 text-white p-2 rounded mr-2">Play with AI</button>
+            <button onClick={openAI} className="bg-blue-500 text-white p-2 rounded mr-2">Play with AI</button>
             <button className="bg-blue-500 text-white p-2 rounded">Play with User</button>
           </div>
         </div>

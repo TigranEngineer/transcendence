@@ -1,35 +1,36 @@
-# Use an official Node.js runtime as the base image
+# Этап сборки
 FROM node:20-alpine AS build
 
-# Set working directory
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Копируем package.json и package-lock.json
 COPY package.json package-lock.json ./
 
-# Install dependencies
+# Устанавливаем зависимости, включая Babylon.js
 RUN npm install
+RUN npm install @babylonjs/core @babylonjs/loaders
 
-# Copy the rest of the frontend code
+# Копируем остальной код фронтенда
 COPY . .
 
-# Build the React app
+# Собираем React-приложение
 RUN npm run build
 
-# Use a lightweight server to serve the built app
+# Этап продакшена
 FROM node:20-alpine
 
-# Install serve to serve the static files
+# Устанавливаем serve для обслуживания статических файлов
 RUN npm install -g serve
 
-# Set working directory
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Copy the build output from the previous stage
+# Копируем собранные файлы из предыдущего этапа
 COPY --from=build /app/build ./build
 
-# Expose the port the frontend runs on
+# Открываем порт, на котором работает фронтенд
 EXPOSE 3003
 
-# Serve the app
+# Запускаем приложение
 CMD ["serve", "-s", "build", "-l", "3003"]
