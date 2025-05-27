@@ -5,7 +5,9 @@ import Home from './pages/Home';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
-import Chat from './components/Chat'
+import Chat from './components/Chat';
+import AI from './pages/AI';
+
 
 const App: React.FC = () => {
   return (
@@ -19,6 +21,7 @@ const App: React.FC = () => {
         <Route path="/chat" element={<Chat />} />
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/ai" element={<AI />} />
       </Routes>
       <ToastContainerWrapper />
     </BrowserRouter>

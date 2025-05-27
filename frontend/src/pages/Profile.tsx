@@ -12,6 +12,13 @@ const Profile: React.FC = () => {
   const token = localStorage.getItem('token');
   const id = localStorage.getItem('id');
 
+
+
+    const RunAI = async () => {
+      navigate('/ai');
+      return ;
+    };
+
   useEffect(() => {
     const fetchUser = async () => {
       if (!token || !id) {
@@ -81,7 +88,7 @@ const Profile: React.FC = () => {
             </div>
           )}
           <div className="mt-4">
-            <button className="bg-blue-500 text-white p-2 rounded mr-2">Play with AI</button>
+            <button onClick = {RunAI} className="bg-blue-500 text-white p-2 rounded mr-2">Play with AI</button>
             <button className="bg-blue-500 text-white p-2 rounded">Play with User</button>
           </div>
         </div>

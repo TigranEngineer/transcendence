@@ -1,0 +1,49 @@
+Database Migration
+Run the Prisma migration to add twoFASecret:
+
+bash
+
+Копировать
+npx prisma migrate dev --name add-two-factor
+Testing Instructions
+Setup Backend:
+Install dependencies:
+bash
+
+Копировать
+npm install speakeasy qrcode
+Apply changes to authService.ts, authController.ts, authRoutes.ts.
+Run the migration for twoFASecret.
+Start the backend:
+bash
+
+Копировать
+node Server.ts
+Setup Frontend:
+Install react-qr-code:
+bash
+
+Копировать
+npm install react-qr-code
+Apply changes to auth.ts, api.ts, Login.tsx, Profile.tsx.
+Start the frontend:
+bash
+
+Копировать
+npm start
+Test Flow:
+Register: Create a new user via /register.
+Enable 2FA:
+Go to /profile.
+Click “Enable 2FA”.
+Scan the QR code with Google Authenticator or Authy.
+Login:
+Log out, then log in with email/password.
+Enter the 6-digit TOTP code from the authenticator app.
+Verify redirect to /profile.
+Play Game: Navigate to /ai (SmartPong) to ensure no interference.
+Navbar: Confirm search, profile, and logout work.
+Verify:
+Check console logs for API calls (api.ts).
+Ensure toast notifications show success/errors.
+Test invalid TOTP codes (should fail with “Invalid 2FA code”).

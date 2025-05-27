@@ -1,4 +1,4 @@
-# Use an official Node.js runtime as the base image
+# Stage 1: Build the React app
 FROM node:20-alpine AS build
 
 # Set working directory
@@ -7,8 +7,13 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
+# Clear npm cache to avoid "idealTree" error and install dependencies
+RUN npm cache clean --force && npm install
+
+RUN npm install react-qr-code
+
+# Install @babylonjs/core explicitly
+RUN npm install @babylonjs/core
 
 # Copy the rest of the frontend code
 COPY . .
@@ -16,7 +21,7 @@ COPY . .
 # Build the React app
 RUN npm run build
 
-# Use a lightweight server to serve the built app
+# Stage 2: Serve the built app
 FROM node:20-alpine
 
 # Install serve to serve the static files
