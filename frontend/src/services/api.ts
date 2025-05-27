@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RegisterRequest, LoginRequest, AuthResponse, UserResponse } from '../types/auth';
+import { RegisterRequest, LoginRequest, AuthResponse, UserResponse, TwoFASetupResponse, TwoFAVerifyRequest, LoginResponse } from '../types/auth';
 
 const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
@@ -41,10 +41,10 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
   }
 };
 
-export const login = async (data: LoginRequest): Promise<AuthResponse> => {
+export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   console.log('Sending login request:', data);
   try {
-    const response = await authApi.post<AuthResponse>('/api/auth/login', data);
+    const response = await authApi.post<LoginResponse>('/api/auth/login', data);
     console.log('Login response:', response.data);
     return response.data;
   } catch (error: any) {
@@ -94,6 +94,30 @@ export const blockUser = async (id: string, blockedId: number, token: string): P
   return await userApi.post(`/api/users/block`, { id, blockedId }, {
     headers: { Authorization: `Bearer ${token}` },
   }).then(res => res.data).catch(err => ({ success: false, error: err.response?.data?.error || 'Unknown error' }));
+};
+
+export const setup2FA = async (userId: number): Promise<TwoFASetupResponse> => {
+  console.log('Sending 2FA setup request for userId:', userId);
+  try {
+    const response = await authApi.post<TwoFASetupResponse>('/api/auth/setup-2fa', { userId });
+    console.log('2FA setup response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('2FA setup error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const verify2FA = async (data: TwoFAVerifyRequest): Promise<AuthResponse> => {
+  console.log('Sending 2FA verification request:', data);
+  try {
+    const response = await authApi.post<AuthResponse>('/api/auth/verify-2fa', data);
+    console.log('2FA verification response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('2FA verification error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 userApi.interceptors.request.use((config) => {

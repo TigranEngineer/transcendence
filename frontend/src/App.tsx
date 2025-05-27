@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import Chat from './components/Chat';
 import AI from './pages/AI';
 
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
