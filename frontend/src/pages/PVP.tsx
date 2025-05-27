@@ -1,14 +1,24 @@
+
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import * as BABYLON from '@babylonjs/core';
+import { getUser, getUserByUsername } from '../services/api';
+import { UserResponse } from '../types/auth';
 
 const SmartPong: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { username } = useParams<{ username?: string }>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const token = localStorage.getItem('token');
+  const id = localStorage.getItem('id');
+  const [user, setUser] = useState<UserResponse | null>(null);
   const [player1Score, setPlayer1Score] = useState(0);
   const [player2Score, setPlayer2Score] = useState(0);
   const [maxScore, setMaxScore] = useState(5);
-  const [player1Name, setPlayer1Name] = useState('Player 1');
-  const [player2Name, setPlayer2Name] = useState('Opponent');
+  const [player1Name, setPlayer1Name] = useState('Гость');
+  const [player2Name, setPlayer2Name] = useState(location.state?.player2Name || 'Opponent');
   const [showMenu, setShowMenu] = useState(true);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [winnerText, setWinnerText] = useState('');
@@ -18,6 +28,39 @@ const SmartPong: React.FC = () => {
   const isGamePaused = useRef(false);
   const leftPaddleVelocity = useRef(0);
   const rightPaddleVelocity = useRef(0);
+
+  // Fetch authenticated user for player1Name
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!token || !id) {
+        toast.error('Please log in to play');
+        navigate('/login');
+        return;
+      }
+
+      try {
+        if (username) {
+          const userData = await getUserByUsername(token, username);
+          setUser(userData);
+        } else {
+          const userData = await getUser(token, id);
+          setUser(userData);
+        }
+      } catch (error: any) {
+        toast.error(error.response?.data?.error || 'Failed to fetch user data');
+        navigate('/login');
+      }
+    };
+
+    fetchUser();
+  }, [navigate, token, id, username]);
+
+  // Update player1Name when user is fetched
+  useEffect(() => {
+    if (user) {
+      setPlayer1Name(user.username || 'Гость');
+    }
+  }, [user]);
 
   // Обработчик установки лимита очков (Apply)
   const applyScoreOnly = () => {
@@ -33,21 +76,10 @@ const SmartPong: React.FC = () => {
   // Обработчик старта игры (Start Game)
   const applyScoreLimit = () => {
     const scoreInput = document.getElementById('scoreLimitInput') as HTMLInputElement;
-    const player1Input = document.getElementById('player1NameInput') as HTMLInputElement;
-    const player2Input = document.getElementById('player2NameInput') as HTMLInputElement;
     const value = parseInt(scoreInput.value);
-    const p1Name = player1Input.value.trim();
-    const p2Name = player2Input.value.trim();
-
     if (!isNaN(value) && value > 0 && value <= 100) {
-      if (p1Name.length > 0 && p1Name.length <= 20 && p2Name.length > 0 && p2Name.length <= 20) {
-        setMaxScore(value);
-        setPlayer1Name(p1Name);
-        setPlayer2Name(p2Name);
-        setShowMenu(false);
-      } else {
-        toast.error('Please enter valid names (1-20 characters) for both players.');
-      }
+      setMaxScore(value);
+      setShowMenu(false);
     } else {
       toast.error('Please enter a valid score limit between 1 and 100.');
     }
@@ -125,7 +157,7 @@ const SmartPong: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [showMenu, showWinnerScreen]);
+  }, [showMenu, showWinnerScreen, player1Name, player2Name]);
 
   const createScene = (
     engine: BABYLON.Engine,
@@ -358,15 +390,6 @@ const SmartPong: React.FC = () => {
       marginRight: '10px',
       outline: 'none',
     },
-    nameInput: {
-      width: '120px',
-      padding: '6px 10px',
-      borderRadius: '8px',
-      border: 'none',
-      fontSize: '16px',
-      margin: '5px 10px',
-      outline: 'none',
-    },
     scoreLimitButton: {
       background: '#4caf50',
       border: 'none',
@@ -422,30 +445,10 @@ const SmartPong: React.FC = () => {
         <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
           <div style={{ fontSize: '20px', marginBottom: '15px' }}>Game Settings</div>
           <div style={{ marginBottom: '10px' }}>
-            <label htmlFor="player1NameInput" style={styles.scoreLimitLabel}>
-              Your Name:
-            </label>
-            <input
-              type="text"
-              id="player1NameInput"
-              defaultValue={player1Name}
-              maxLength={20}
-              style={styles.nameInput}
-              aria-label="Set your name"
-            />
+            <span style={styles.scoreLimitLabel}>Player 1: {player1Name}</span>
           </div>
           <div style={{ marginBottom: '10px' }}>
-            <label htmlFor="player2NameInput" style={styles.scoreLimitLabel}>
-              Opponent Name:
-            </label>
-            <input
-              type="text"
-              id="player2NameInput"
-              defaultValue={player2Name}
-              maxLength={20}
-              style={styles.nameInput}
-              aria-label="Set opponent name"
-            />
+            <span style={styles.scoreLimitLabel}>Player 2: {player2Name}</span>
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
@@ -500,7 +503,6 @@ const SmartPong: React.FC = () => {
       </div>
       <div id="scoreboard" style={styles.scoreboard}>
         {player1Name}: {player1Score} | {player2Name}: {player2Score}
-        {/* {user?.username || 'Player1'}: {player1Score} | player2Name: {player2Score} */}
       </div>
       <canvas id="renderCanvas" ref={canvasRef} style={styles.canvas} aria-label="Pong game canvas" />
     </div>
