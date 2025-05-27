@@ -229,6 +229,7 @@ const SmartPong: React.FC = () => {
     const resetBall = () => {
       player.position.x = 0;
       ai.position.x = 0;
+      aiTargetX = 0;
       ball.position = new BABYLON.Vector3(0, 0.5, 0);
       ballVelocity = new BABYLON.Vector3(0, 0, ballSpeed * (Math.random() > 0.5 ? 1 : -1));
     };
@@ -287,7 +288,11 @@ const SmartPong: React.FC = () => {
       if (input.d && player.position.x < groundWidth / 2 - 1) player.position.x += moveSpeed * dt;
 
       predictBallPosition();
-      ai.position.x = moveTowards(ai.position.x, aiTargetX, aiMoveSpeed * dt);
+      // ai.position.x = moveTowards(ai.position.x, aiTargetX, aiMoveSpeed * dt);
+      const newAiX = moveTowards(ai.position.x, aiTargetX, aiMoveSpeed * dt);
+      if (newAiX > -groundWidth / 2 + 1 && newAiX < groundWidth / 2 - 1) {
+        ai.position.x = newAiX;
+      }
 
       ball.position.addInPlace(ballVelocity);
 
