@@ -12,13 +12,6 @@ const Profile: React.FC = () => {
   const token = localStorage.getItem('token');
   const id = localStorage.getItem('id');
 
-
-
-    const RunAI = async () => {
-      navigate('/ai');
-      return ;
-    };
-
   useEffect(() => {
     const fetchUser = async () => {
       if (!token || !id) {

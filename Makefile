@@ -6,15 +6,9 @@ reset := \033[0m
 red := \033[31m
 
 ifeq ($(UNAME), Darwin)
-<<<<<<< HEAD
 	DOCKER_COMPOSE = docker-compose
 else
 	DOCKER_COMPOSE = docker compose
-=======
-	DOCKER_COMPOSE =  docker-compose
-else
-	DOCKER_COMPOSE =  docker compose
->>>>>>> 073ed431182683cd9d8f6646f54698ce180c18b1
 endif
 
 all: up

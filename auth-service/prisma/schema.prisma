@@ -8,13 +8,10 @@ datasource db {
 }
 
 model UserAuth {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  username          String
-  password     String
-  userId        Int
-  twoFASecret   String?   // New field for TOTP
-  createdAt    DateTime @default(now())
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  userId   Int    @unique
 }
 
 model User {
