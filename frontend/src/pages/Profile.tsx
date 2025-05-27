@@ -16,7 +16,7 @@ const Profile: React.FC = () => {
     const fetchUser = async () => {
       if (!token || !id) {
         toast.error('Please log in to view your profile');
-        navigate('/login');
+        navigate('/Profile');
         return;
       }
 
@@ -31,7 +31,7 @@ const Profile: React.FC = () => {
         }
       } catch (error: any) {
         toast.error(error.response?.data?.error || 'Failed to fetch user data');
-        navigate('/login');
+        navigate('/Profile');
       }
     };
 
@@ -61,37 +61,56 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <h2 className="text-2xl font-bold text-blue-600 mb-4">Profile</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-6">
+      <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center animate-fade-in">
+        Profile
+      </h2>
+
       {user ? (
-        <div className="bg-white p-4 rounded-lg shadow-lg max-w-md mx-auto">
+        <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-auto animate-fade-in">
           <img
             src={user.profilePhoto || 'https://via.placeholder.com/150'}
             alt={`${user.username}'s profile`}
-            className="w-40 h-40 rounded-full mx-auto mb-4"
+            className="w-40 h-40 rounded-full mx-auto mb-6 border-4 border-blue-300 shadow-md"
           />
-          <p><strong>Username:</strong> {user.username}</p>
-          <p><strong>Played:</strong> 0</p>
-          <p><strong>Wins:</strong> 0</p>
-          <p><strong>Joined:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+          <div className="text-center text-gray-800 space-y-2">
+            <p><strong>Username:</strong> {user.username}</p>
+            <p><strong>Played:</strong> 0</p>
+            <p><strong>Wins:</strong> 0</p>
+            <p><strong>Joined:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+          </div>
+
           {id && user.id !== parseInt(id) && (
-            <div className="mt-4">
-              <button onClick={handleAddFriend} className="bg-green-500 text-white p-2 rounded mr-2">
+            <div className="mt-6 text-center space-x-2">
+              <button
+                onClick={handleAddFriend}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md"
+              >
                 Add Friend
               </button>
-              <button onClick={handleBlockUser} className="bg-red-500 text-white p-2 rounded">
+              <button
+                onClick={handleBlockUser}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md"
+              >
                 Block User
               </button>
-              {status && <p className="mt-2 text-green-500">{status}</p>}
+              {status && <p className="mt-2 text-green-600 font-medium">{status}</p>}
             </div>
           )}
-          <div className="mt-4">
-            <button onClick={openAI} className="bg-blue-500 text-white p-2 rounded mr-2">Play with AI</button>
-            <button className="bg-blue-500 text-white p-2 rounded">Play with User</button>
+
+          <div className="mt-6 text-center space-x-2">
+            <button 
+            onClick={openAI}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md">
+              Play with AI
+            </button>
+            <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md">
+              Play with User
+            </button>
           </div>
         </div>
       ) : (
-        <p>Loading...</p>
+        <p className="text-center text-gray-700">Loading...</p>
       )}
     </div>
   );

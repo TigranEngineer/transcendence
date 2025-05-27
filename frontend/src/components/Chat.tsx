@@ -27,52 +27,40 @@ const Chat: React.FC = () => {
       try {
         const response = await fetch(`http://localhost:4000/api/chat/history?userId=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
-          credentials: 'include', // If needed for cookies/auth
+          credentials: 'include',
         });
         if (response.ok) {
           const history = await response.json();
-          const sortedHistory = history.sort((a: any, b: any) => 
+          const sortedHistory = history.sort((a: any, b: any) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
           setMessages(sortedHistory);
           localStorage.setItem('chatMessages', JSON.stringify(sortedHistory));
-          console.log('Loaded chat history:', sortedHistory);
         } else {
-          console.error('Failed to load chat history, status:', response.status);
           setConnectionError(`Failed to load chat history (status: ${response.status}).`);
         }
       } catch (error) {
-        console.error('Error loading chat history:', error);
         setConnectionError('Failed to load chat history. Check server connection.');
       }
     };
 
-    if (userId && userId > 0) {
-      loadInitialData();
-    }
+    if (userId > 0) loadInitialData();
   }, [userId, token]);
 
   useEffect(() => {
-    console.log('Stored userId from localStorage:', storedUserId);
-    console.log('Parsed userId:', userId);
-    if (!userId || userId <= 0) {
-      console.error('Invalid userId, WebSocket connection will not be initiated.');
+    if (userId <= 0) {
       setConnectionError('Invalid userId. Please log in again.');
       return;
     }
 
     const connectWebSocket = () => {
       setConnectionAttempts((prev) => prev + 1);
-      console.log(`Connection attempt #${connectionAttempts + 1}`);
-
       const wsUrl = `ws://localhost:4000/api/chat?userId=${userId}`;
-      console.log('Attempting to connect to WebSocket at:', wsUrl);
 
       try {
         ws.current = new W3CWebSocket(wsUrl);
 
         ws.current.onopen = () => {
-          console.log('WebSocket Connected to:', wsUrl);
           setIsConnected(true);
           setConnectionError(null);
           setConnectionAttempts(0);
@@ -80,9 +68,7 @@ const Chat: React.FC = () => {
 
         ws.current.onmessage = (event: any) => {
           const data = JSON.parse(event.data);
-          console.log('Received message data:', data);
           if (data.error) {
-            console.error('Message error:', data.error);
             if (data.error === 'Sender not found') {
               setConnectionError('User not found. Please log in again.');
               localStorage.removeItem('id');
@@ -92,39 +78,34 @@ const Chat: React.FC = () => {
           }
           if (data.receiverId === userId || (data.sent && data.senderId === userId)) {
             setMessages((prev) => {
-              const updatedMessages = [...prev, data].sort((a: any, b: any) => 
+              const updated = [...prev, data].sort((a, b) =>
                 new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
               );
-              localStorage.setItem('chatMessages', JSON.stringify(updatedMessages));
-              console.log('Updated messages saved to localStorage:', updatedMessages);
-              return updatedMessages;
+              localStorage.setItem('chatMessages', JSON.stringify(updated));
+              return updated;
             });
             if (data.senderId && !chatUsers.find(u => u.id === data.senderId) && data.senderId !== userId) {
               setChatUsers((prev) => {
-                const updatedUsers = [...prev, { id: data.senderId, username: data.username }];
-                localStorage.setItem('chatUsers', JSON.stringify(updatedUsers));
-                console.log('Updated chatUsers saved to localStorage:', updatedUsers);
-                return updatedUsers;
+                const updated = [...prev, { id: data.senderId, username: data.username }];
+                localStorage.setItem('chatUsers', JSON.stringify(updated));
+                return updated;
               });
             }
           }
         };
 
-        ws.current.onerror = (error: any) => {
-          console.error('WebSocket Error:', error);
+        ws.current.onerror = () => {
           setIsConnected(false);
-          setConnectionError(`Failed to connect to chat service (attempt ${connectionAttempts + 1}). Check if chat-service is running on port 4000.`);
+          setConnectionError(`WebSocket error (attempt ${connectionAttempts + 1}). Check chat-service.`);
         };
 
         ws.current.onclose = (event: any) => {
-          console.log('WebSocket Disconnected, code:', event.code, 'reason:', event.reason);
           setIsConnected(false);
           setConnectionError(`WebSocket disconnected (code ${event.code}). Reconnecting...`);
           const delay = Math.min(2000 * Math.pow(2, connectionAttempts), 10000);
           setTimeout(connectWebSocket, delay);
         };
-      } catch (error) {
-        console.error('Error initializing WebSocket:', error);
+      } catch {
         setConnectionError('Error initializing WebSocket connection.');
       }
     };
@@ -132,65 +113,54 @@ const Chat: React.FC = () => {
     connectWebSocket();
 
     return () => {
-      if (ws.current) {
-        console.log('Cleaning up WebSocket');
-        ws.current.close();
-      }
+      if (ws.current) ws.current.close();
     };
-  }, [userId]);
+  }, [userId, connectionAttempts]);
 
   useEffect(() => {
-    console.log('Messages updated, saving to localStorage:', messages);
     localStorage.setItem('chatMessages', JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
-    console.log('ChatUsers updated, saving to localStorage:', chatUsers);
     localStorage.setItem('chatUsers', JSON.stringify(chatUsers));
   }, [chatUsers]);
 
   const selectChat = (user: any) => {
-    console.log('Selecting chat for user:', user);
     setSelectedUser(user);
-    const filteredMessages = messages.filter(msg => 
-      (msg.senderId === user.id && msg.receiverId === userId) || 
+    const filtered = messages.filter(msg =>
+      (msg.senderId === user.id && msg.receiverId === userId) ||
       (msg.receiverId === user.id && msg.senderId === userId)
     );
-    const sortedFilteredMessages = filteredMessages.sort((a: any, b: any) => 
+    const sorted = filtered.sort((a, b) =>
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-    console.log('Filtered messages for selected user:', sortedFilteredMessages);
-    setMessages(sortedFilteredMessages);
-    localStorage.setItem('chatMessages', JSON.stringify(sortedFilteredMessages));
+    setMessages(sorted);
+    localStorage.setItem('chatMessages', JSON.stringify(sorted));
   };
 
   const sendMessage = () => {
-    console.log(`ws.current = ${ws.current}`);
-    console.log(`ws.current.readyState = ${ws.current?.readyState}`);
-    console.log(`message.trim = ${message.trim()}`);
-    console.log(`selectedUser = ${selectedUser}`);
-
     if (ws.current && ws.current.readyState === 1 && message.trim() && selectedUser) {
-      const msg = { 
-        to: selectedUser.id, 
-        content: message, 
-        senderId: userId, 
-        username: 'You', 
+      const msg = {
+        content: message.trim(),
+        senderId: userId,
+        username: 'You',
         createdAt: new Date().toISOString(),
-        receiverId: selectedUser.id 
+        receiverId: selectedUser.id,
       };
-      ws.current.send(JSON.stringify(msg));
-      setMessages((prev) => {
-        const updatedMessages = [...prev, msg].sort((a: any, b: any) => 
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-        localStorage.setItem('chatMessages', JSON.stringify(updatedMessages));
-        console.log('Sent message added locally:', updatedMessages);
-        return updatedMessages;
-      });
-      setMessage('');
-    } else {
-      console.log('Cannot send message: WebSocket not ready or invalid state');
+
+      try {
+        ws.current.send(JSON.stringify(msg));
+        setMessages((prev) => {
+          const updated = [...prev, msg].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          localStorage.setItem('chatMessages', JSON.stringify(updated));
+          return updated;
+        });
+        setMessage('');
+      } catch {
+        console.error('Failed to send message via WebSocket');
+      }
     }
   };
 
@@ -200,95 +170,137 @@ const Chat: React.FC = () => {
         const newUser = await getUserByUsername(token, searchUsername);
         if (newUser && newUser.id !== userId && !chatUsers.find(u => u.id === newUser.id)) {
           setChatUsers((prev) => {
-            const updatedUsers = [...prev, newUser];
-            localStorage.setItem('chatUsers', JSON.stringify(updatedUsers));
-            console.log('Added new chat user:', updatedUsers);
-            return updatedUsers;
+            const updated = [...prev, newUser];
+            localStorage.setItem('chatUsers', JSON.stringify(updated));
+            return updated;
           });
           setSelectedUser(newUser);
-          const filteredMessages = messages.filter(msg => 
-            (msg.senderId === newUser.id && msg.receiverId === userId) || 
+          const filtered = messages.filter(msg =>
+            (msg.senderId === newUser.id && msg.receiverId === userId) ||
             (msg.receiverId === newUser.id && msg.senderId === userId)
           );
-          const sortedFilteredMessages = filteredMessages.sort((a: any, b: any) => 
+          const sorted = filtered.sort((a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
-          setMessages(sortedFilteredMessages);
-          localStorage.setItem('chatMessages', JSON.stringify(sortedFilteredMessages));
-        } else if (newUser && newUser.id === userId) {
-          console.warn("Cannot add yourself to chat list.");
-        } else if (newUser && chatUsers.find(u => u.id === newUser.id)) {
-          console.warn("User already in chat list.");
+          setMessages(sorted);
+          localStorage.setItem('chatMessages', JSON.stringify(sorted));
         }
-      } catch (error) {
-        console.error('Error adding new chat:', error);
+      } catch {
+        console.error('Error adding new chat');
       }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <h2 className="text-2xl font-bold text-blue-600 mb-4">Chat</h2>
+    <div className="min-h-screen bg-gray-50 p-6 flex flex-col max-w-7xl mx-auto">
+      <h2 className="text-3xl font-extrabold text-blue-700 mb-6 border-b-2 border-blue-300 pb-2">
+        Chat
+      </h2>
+
       {connectionError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-100 border border-red-400 text-red-800 px-6 py-3 rounded-md mb-6 shadow-sm">
           {connectionError}
         </div>
       )}
-      <div className="mb-4 flex">
+
+      <div className="mb-6 flex max-w-md">
         <input
           type="text"
           value={searchUsername}
           onChange={(e) => setSearchUsername(e.target.value)}
           placeholder="Search username to chat..."
-          className="p-1 border rounded-l text-black"
+          className="flex-grow p-3 border border-gray-300 rounded-l-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
         />
-        <button onClick={addNewChat} className="bg-blue-500 text-white p-1 rounded-r">
+        <button
+          onClick={addNewChat}
+          className="bg-blue-600 hover:bg-blue-700 transition text-white px-5 rounded-r-md font-semibold"
+        >
           Add Chat
         </button>
       </div>
-      <div className="flex">
-        <div className="w-1/4 bg-white p-4 rounded-lg shadow-lg mr-4 h-64 overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-2">Chats</h3>
+
+      <div className="flex flex-grow gap-6">
+        <aside className="w-1/4 bg-white rounded-xl shadow-lg p-5 h-[26rem] overflow-y-auto">
+          <h3 className="text-xl font-semibold text-gray-700 mb-4 border-b border-gray-200 pb-2">
+            Chats
+          </h3>
+          {chatUsers.length === 0 && (
+            <p className="text-gray-400 italic text-sm">No chats yet</p>
+          )}
           {chatUsers.map((user) => (
             <div
               key={user.id}
               onClick={() => selectChat(user)}
-              className="cursor-pointer p-2 hover:bg-gray-200 rounded"
+              className={`cursor-pointer p-3 rounded-lg mb-2 transition hover:bg-blue-100 ${
+                selectedUser?.id === user.id ? 'bg-blue-200 font-semibold text-blue-700' : 'text-gray-800'
+              }`}
             >
               {user.username}
             </div>
           ))}
-        </div>
-        <div className="w-3/4">
-          <div className="bg-white p-4 rounded-lg shadow-lg h-64 overflow-y-auto mb-4">
+        </aside>
+
+        <section className="flex-1 flex flex-col">
+          <div className="bg-white rounded-xl shadow-lg p-6 h-[26rem] overflow-y-auto mb-5 flex flex-col-reverse">
             {selectedUser ? (
-              messages.map((msg, index) => (
-                <div key={index} className="mb-2">
-                  <strong>{msg.username || 'Unknown'}</strong>: {msg.content || 'No content'} ({msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString() : 'No time'})
-                </div>
-              ))
+              messages.length > 0 ? (
+                messages
+                  .slice()
+                  .reverse()
+                  .map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`mb-3 px-4 py-2 rounded-lg max-w-xs ${
+                        msg.username === selectedUser.username
+                          ? 'bg-blue-100 self-start text-blue-900'
+                          : 'bg-gray-200 self-end text-gray-800'
+                      }`}
+                    >
+                      <div className="text-sm font-medium mb-1">{msg.username || 'Unknown'}</div>
+                      <div>{msg.content || 'No content'}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {msg.createdAt
+                          ? new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : 'No time'}
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                <p className="text-gray-400 italic">No messages yet. Start the conversation!</p>
+              )
             ) : (
-              <p>Select a chat to start messaging</p>
+              <p className="text-gray-500 italic self-center mt-auto">Select a chat to start messaging</p>
             )}
           </div>
-          <div className="flex">
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendMessage();
+            }}
+            className="flex gap-0"
+          >
             <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Type a message..."
+              className="flex-grow p-3 border border-gray-300 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              placeholder={selectedUser && isConnected ? 'Type a message...' : 'Select a chat to send messages'}
               disabled={!selectedUser || !isConnected}
+              autoComplete="off"
             />
             <button
-              onClick={sendMessage}
-              className="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600"
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 rounded-r-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!selectedUser || !isConnected}
             >
               Send
             </button>
-          </div>
-        </div>
+          </form>
+        </section>
       </div>
     </div>
   );
