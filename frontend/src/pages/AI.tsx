@@ -27,32 +27,6 @@ const SmartPong: React.FC = () => {
   const [winner, setWinner] = useState<string | null>(null);
 
 
-
-    const fetchUser = async () => {
-      if (!token || !id) {
-        toast.error('Please log in to view your profile');
-        navigate('/login');
-        return;
-      }
-
-      try {
-        if (username) {
-          const userData = await getUserByUsername(token, username);
-          setUser(userData);
-        } else {
-
-          const userData = await getUser(token, id);
-          setUser(userData);
-        }
-      } catch (error: any) {
-        toast.error(error.response?.data?.error || 'Failed to fetch user data');
-      }
-    };
-
-    fetchUser();
-
-
-
   // Настройки сложности AI
   const difficultySettings: { [key: string]: { randomness: number; reactionDelay: number } } = {
     easy: { randomness: 3, reactionDelay: 1500 },
@@ -353,7 +327,7 @@ const SmartPong: React.FC = () => {
             const newScore = prev + 1;
             console.log('Player Score:', newScore, 'Max Score:', maxScore);
             if (newScore >= maxScore) {
-              setWinner('Player');
+              setWinner(user?.username || 'Гость');
               return newScore;
             }
             resetBall();
@@ -528,7 +502,7 @@ const SmartPong: React.FC = () => {
           display: showDifficultyMenu ? 'none' : 'block',
         }}
       >
-        {user.username}: {playerScore} | AI: {aiScore}
+        {user?.username || 'Гость'}: {playerScore} | AI: {aiScore}
       </div>
       <div
         id="winnerMessage"
