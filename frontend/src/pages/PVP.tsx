@@ -1,0 +1,510 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
+import * as BABYLON from '@babylonjs/core';
+
+const SmartPong: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
+  const [maxScore, setMaxScore] = useState(5);
+  const [player1Name, setPlayer1Name] = useState('Player 1');
+  const [player2Name, setPlayer2Name] = useState('Opponent');
+  const [showMenu, setShowMenu] = useState(true);
+  const [showWinnerScreen, setShowWinnerScreen] = useState(false);
+  const [winnerText, setWinnerText] = useState('');
+  const input = useRef<{ w: boolean, s: boolean, arrowup: boolean, arrowdown: boolean }>({ w: false, s: false, arrowup: false, arrowdown: false });
+  const lastWallHit = useRef<string | null>(null);
+  const gameRunning = useRef(false);
+  const isGamePaused = useRef(false);
+  const leftPaddleVelocity = useRef(0);
+  const rightPaddleVelocity = useRef(0);
+
+  // Обработчик установки лимита очков (Apply)
+  const applyScoreOnly = () => {
+    const scoreInput = document.getElementById('scoreLimitInput') as HTMLInputElement;
+    const value = parseInt(scoreInput.value);
+    if (!isNaN(value) && value > 0 && value <= 100) {
+      setMaxScore(value);
+    } else {
+      toast.error('Please enter a valid score limit between 1 and 100.');
+    }
+  };
+
+  // Обработчик старта игры (Start Game)
+  const applyScoreLimit = () => {
+    const scoreInput = document.getElementById('scoreLimitInput') as HTMLInputElement;
+    const player1Input = document.getElementById('player1NameInput') as HTMLInputElement;
+    const player2Input = document.getElementById('player2NameInput') as HTMLInputElement;
+    const value = parseInt(scoreInput.value);
+    const p1Name = player1Input.value.trim();
+    const p2Name = player2Input.value.trim();
+
+    if (!isNaN(value) && value > 0 && value <= 100) {
+      if (p1Name.length > 0 && p1Name.length <= 20 && p2Name.length > 0 && p2Name.length <= 20) {
+        setMaxScore(value);
+        setPlayer1Name(p1Name);
+        setPlayer2Name(p2Name);
+        setShowMenu(false);
+      } else {
+        toast.error('Please enter valid names (1-20 characters) for both players.');
+      }
+    } else {
+      toast.error('Please enter a valid score limit between 1 and 100.');
+    }
+  };
+
+  // Обработчик перезапуска игры (Play Again)
+  const handleRestart = () => {
+    setPlayer1Score(0);
+    setPlayer2Score(0);
+    setShowMenu(true);
+    setShowWinnerScreen(false);
+    lastWallHit.current = null;
+    gameRunning.current = false;
+    isGamePaused.current = false;
+    leftPaddleVelocity.current = 0;
+    rightPaddleVelocity.current = 0;
+  };
+
+  // Инициализация игры
+  useEffect(() => {
+    if (!canvasRef.current || showMenu) return;
+
+    const engine = new BABYLON.Engine(canvasRef.current, true);
+    const scene = createScene(engine, canvasRef.current, input.current, {
+      player1Score,
+      setPlayer1Score,
+      player2Score,
+      setPlayer2Score,
+      maxScore,
+      setWinner: (winner: string) => {
+        setTimeout(() => {
+          setWinnerText(`${winner} wins!`);
+          setShowWinnerScreen(true);
+          gameRunning.current = false;
+        }, 200);
+        isGamePaused.current = true;
+      },
+      lastWallHit,
+      player1Name,
+      player2Name,
+    });
+
+    gameRunning.current = true;
+    engine.runRenderLoop(() => {
+      if (showWinnerScreen || !gameRunning.current) {
+        engine.stopRenderLoop();
+        return;
+      }
+      scene.render();
+    });
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key in input.current) {
+        input.current[key as keyof typeof input.current] = true;
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key in input.current) {
+        input.current[key as keyof typeof input.current] = false;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    const handleResize = () => engine.resize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      engine.stopRenderLoop();
+      scene.onBeforeRenderObservable.clear();
+      engine.dispose();
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [showMenu, showWinnerScreen]);
+
+  const createScene = (
+    engine: BABYLON.Engine,
+    canvas: HTMLCanvasElement,
+    input: { w: boolean; s: boolean; arrowup: boolean; arrowdown: boolean },
+    state: {
+      player1Score: number;
+      setPlayer1Score: React.Dispatch<React.SetStateAction<number>>;
+      player2Score: number;
+      setPlayer2Score: React.Dispatch<React.SetStateAction<number>>;
+      maxScore: number;
+      setWinner: (winner: string) => void;
+      lastWallHit: React.MutableRefObject<string | null>;
+      player1Name: string;
+      player2Name: string;
+    }
+  ) => {
+    const scene = new BABYLON.Scene(engine);
+    scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+    const camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 0, -30), scene);
+    camera.setTarget(BABYLON.Vector3.Zero());
+
+    const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+
+    const paddleWidth = 1,
+      paddleHeight = 4;
+    const leftPaddle = BABYLON.MeshBuilder.CreateBox('leftPaddle', { width: paddleWidth, height: paddleHeight, depth: 0.5 }, scene);
+    leftPaddle.position.x = -13;
+
+    const rightPaddle = BABYLON.MeshBuilder.CreateBox('rightPaddle', { width: paddleWidth, height: paddleHeight, depth: 0.5 }, scene);
+    rightPaddle.position.x = 13;
+
+    const ball = BABYLON.MeshBuilder.CreateSphere('ball', { diameter: 1 }, scene);
+    let ballVelocity = new BABYLON.Vector3(0.4, 0.1, 0);
+
+    const wallMaterial = new BABYLON.StandardMaterial('wallMat', scene);
+    wallMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+
+    const wallTop = BABYLON.MeshBuilder.CreateBox('wallTop', { width: 30, height: 0.3, depth: 0.5 }, scene);
+    wallTop.position.y = 7.5;
+    wallTop.material = wallMaterial;
+
+    const wallBottom = BABYLON.MeshBuilder.CreateBox('wallBottom', { width: 30, height: 0.3, depth: 0.5 }, scene);
+    wallBottom.position.y = -7.5;
+    wallBottom.material = wallMaterial;
+
+    const leftWall = BABYLON.MeshBuilder.CreateBox('leftWall', { width: 0.5, height: 14, depth: 1 }, scene);
+    leftWall.position.x = -16.5;
+    leftWall.material = wallMaterial;
+
+    const rightWall = BABYLON.MeshBuilder.CreateBox('rightWall', { width: 0.5, height: 14, depth: 1 }, scene);
+    rightWall.position.x = 16.5;
+    rightWall.material = wallMaterial;
+
+    for (let y = -7; y <= 7; y += 1.5) {
+      const segment = BABYLON.MeshBuilder.CreateBox('segment', { width: 0.2, height: 0.6, depth: 0.1 }, scene);
+      segment.position.x = 0;
+      segment.position.y = y;
+      segment.material = wallMaterial;
+    }
+
+    const checkCollision = (paddle: BABYLON.Mesh) => {
+      const paddleMinX = paddle.position.x - paddleWidth / 2;
+      const paddleMaxX = paddle.position.x + paddleWidth / 2;
+      const paddleMinY = paddle.position.y - paddleHeight / 2;
+      const paddleMaxY = paddle.position.y + paddleHeight / 2;
+
+      const ballMinX = ball.position.x - 0.5;
+      const ballMaxX = ball.position.x + 0.5;
+      const ballMinY = ball.position.y - 0.5;
+      const ballMaxY = ball.position.y + 0.5;
+
+      return ballMaxX >= paddleMinX && ballMinX <= paddleMaxX && ballMaxY >= paddleMinY && ballMinY <= paddleMaxY;
+    };
+
+    const reflectBall = (paddle: BABYLON.Mesh, isLeft: boolean, paddleVelocity: number) => {
+      const deltaY = ball.position.y - paddle.position.y;
+      const normalized = Math.max(-1, Math.min(1, deltaY / (paddleHeight / 2)));
+      const maxAngle = Math.PI / 3;
+      const angle = normalized * maxAngle * (Math.abs(normalized) > 0.8 ? 1.2 : 1);
+      const baseSpeed = 0.4;
+      const speed = baseSpeed + Math.abs(paddleVelocity) * 0.1;
+      const dir = isLeft ? 1 : -1;
+      ballVelocity.x = dir * speed * Math.cos(angle);
+      ballVelocity.y = speed * Math.sin(angle);
+    };
+
+    const resetBall = () => {
+      leftPaddle.position.y = 0;
+      rightPaddle.position.y = 0;
+      ball.position = new BABYLON.Vector3(0, 0, 0);
+      const angle = Math.random() * (Math.PI / 36) - Math.PI / 72;
+      const dir = Math.random() > 0.5 ? 1 : -1;
+      const speed = 0.4;
+      ballVelocity.x = dir * speed * Math.cos(angle);
+      ballVelocity.y = speed * Math.sin(angle);
+      state.lastWallHit.current = null;
+    };
+
+    scene.onBeforeRenderObservable.add(() => {
+      if (isGamePaused.current || !gameRunning.current) {
+        return;
+      }
+
+      const speed = 0.4;
+      const yMin = -5;
+      const yMax = 5;
+
+      leftPaddleVelocity.current = 0;
+      if (input.w && leftPaddle.position.y < yMax) {
+        leftPaddle.position.y = Math.min(leftPaddle.position.y + speed, yMax);
+        leftPaddleVelocity.current = speed;
+      }
+      if (input.s && leftPaddle.position.y > yMin) {
+        leftPaddle.position.y = Math.max(leftPaddle.position.y - speed, yMin);
+        leftPaddleVelocity.current = -speed;
+      }
+      rightPaddleVelocity.current = 0;
+      if (input.arrowup && rightPaddle.position.y < yMax) {
+        rightPaddle.position.y = Math.min(rightPaddle.position.y + speed, yMax);
+        rightPaddleVelocity.current = speed;
+      }
+      if (input.arrowdown && rightPaddle.position.y > yMin) {
+        rightPaddle.position.y = Math.max(rightPaddle.position.y - speed, yMin);
+        rightPaddleVelocity.current = -speed;
+      }
+
+      ball.position.addInPlace(ballVelocity);
+
+      if (ball.position.y >= 7 && state.lastWallHit.current !== 'top') {
+        state.lastWallHit.current = 'top';
+        ballVelocity.y = -Math.abs(ballVelocity.y);
+        ballVelocity.y *= 0.95 + Math.random() * 0.1;
+        ballVelocity.x *= 0.95 + Math.random() * 0.1;
+        ball.position.y = 6.9;
+      } else if (ball.position.y <= -7 && state.lastWallHit.current !== 'bottom') {
+        state.lastWallHit.current = 'bottom';
+        ballVelocity.y = Math.abs(ballVelocity.y);
+        ballVelocity.y *= 0.95 + Math.random() * 0.1;
+        ballVelocity.x *= 0.95 + Math.random() * 0.1;
+        ball.position.y = -6.9;
+      } else if (ball.position.y < 6.9 && ball.position.y > -6.9) {
+        state.lastWallHit.current = null;
+      }
+
+      if (checkCollision(leftPaddle)) {
+        reflectBall(leftPaddle, true, leftPaddleVelocity.current);
+        state.lastWallHit.current = null;
+      }
+      if (checkCollision(rightPaddle)) {
+        reflectBall(rightPaddle, false, rightPaddleVelocity.current);
+        state.lastWallHit.current = null;
+      }
+
+      if (ball.position.x < -17) {
+        state.setPlayer2Score((prev) => {
+          const newScore = prev + 1;
+          if (newScore >= state.maxScore) {
+            state.setWinner(state.player2Name);
+          }
+          return newScore;
+        });
+        resetBall();
+      }
+      if (ball.position.x > 17) {
+        state.setPlayer1Score((prev) => {
+          const newScore = prev + 1;
+          if (newScore >= state.maxScore) {
+            state.setWinner(state.player1Name);
+          }
+          return newScore;
+        });
+        resetBall();
+      }
+    });
+
+    return scene;
+  };
+
+  const styles: { [key: string]: React.CSSProperties } = {
+    container: {
+      width: '100%',
+      height: '100%',
+      margin: 0,
+      overflow: 'hidden',
+      background: 'linear-gradient(to bottom, #0f2027, #203a43, #2c5364)',
+    },
+    canvas: {
+      width: '100%',
+      height: '100%',
+      display: 'block',
+    },
+    scoreboard: {
+      position: 'absolute',
+      top: '10px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      color: 'white',
+      fontFamily: 'monospace',
+      fontSize: '24px',
+      zIndex: 1,
+      display: showMenu ? 'none' : 'block',
+    },
+    scoreLimitContainer: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      background: '#222',
+      color: '#eee',
+      borderRadius: '12px',
+      boxShadow: '0 6px 15px rgba(0,0,0,0.4)',
+      fontFamily: "'Segoe UI', Arial, sans-serif",
+      textAlign: 'center',
+      padding: '20px 30px',
+      zIndex: 20,
+    },
+    scoreLimitLabel: {
+      fontWeight: 600,
+      marginRight: '10px',
+      fontSize: '16px',
+    },
+    scoreLimitInput: {
+      width: '60px',
+      padding: '6px 10px',
+      borderRadius: '8px',
+      border: 'none',
+      fontSize: '16px',
+      marginRight: '10px',
+      outline: 'none',
+    },
+    nameInput: {
+      width: '120px',
+      padding: '6px 10px',
+      borderRadius: '8px',
+      border: 'none',
+      fontSize: '16px',
+      margin: '5px 10px',
+      outline: 'none',
+    },
+    scoreLimitButton: {
+      background: '#4caf50',
+      border: 'none',
+      color: 'white',
+      padding: '7px 15px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontWeight: 600,
+      transition: 'background 0.3s ease',
+      margin: '0 5px',
+    },
+    scoreLimitButtonHover: {
+      background: '#45a049',
+    },
+    scoreLimitDisplay: {
+      marginLeft: '15px',
+      fontSize: '16px',
+      fontWeight: 600,
+      verticalAlign: 'middle',
+    },
+    winnerScreen: {
+      display: showWinnerScreen ? 'block' : 'none',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      padding: '30px 50px',
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      color: 'white',
+      fontSize: '24px',
+      borderRadius: '15px',
+      boxShadow: '0 0 15px rgba(255,255,255,0.2)',
+      textAlign: 'center',
+      zIndex: 1000,
+      fontFamily: "'Segoe UI', Arial, sans-serif",
+    },
+    winnerButton: {
+      marginTop: '20px',
+      padding: '10px 20px',
+      fontSize: '18px',
+      border: 'none',
+      borderRadius: '10px',
+      backgroundColor: '#4CAF50',
+      color: 'white',
+      cursor: 'pointer',
+      transition: 'background-color 0.3s ease',
+    },
+  };
+
+  return (
+    <div style={styles.container}>
+      {showMenu && (
+        <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
+          <div style={{ fontSize: '20px', marginBottom: '15px' }}>Game Settings</div>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="player1NameInput" style={styles.scoreLimitLabel}>
+              Your Name:
+            </label>
+            <input
+              type="text"
+              id="player1NameInput"
+              defaultValue={player1Name}
+              maxLength={20}
+              style={styles.nameInput}
+              aria-label="Set your name"
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="player2NameInput" style={styles.scoreLimitLabel}>
+              Opponent Name:
+            </label>
+            <input
+              type="text"
+              id="player2NameInput"
+              defaultValue={player2Name}
+              maxLength={20}
+              style={styles.nameInput}
+              aria-label="Set opponent name"
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
+              Play to:
+            </label>
+            <input
+              type="number"
+              id="scoreLimitInput"
+              defaultValue={5}
+              min="1"
+              max="100"
+              step="1"
+              style={styles.scoreLimitInput}
+              aria-label="Set score limit"
+            />
+          </div>
+          <button
+            onClick={applyScoreOnly}
+            style={styles.scoreLimitButton}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+            aria-label="Apply score limit"
+          >
+            Apply
+          </button>
+          <button
+            onClick={applyScoreLimit}
+            style={styles.scoreLimitButton}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+            aria-label="Start game"
+          >
+            Start Game
+          </button>
+          <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
+            Current limit: {maxScore}
+          </span>
+        </div>
+      )}
+      <div id="winnerScreen" style={styles.winnerScreen}>
+        <div id="winnerText">{winnerText}</div>
+        <button
+          id="restartButton"
+          onClick={handleRestart}
+          style={styles.winnerButton}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
+          aria-label="Play again"
+        >
+          Play Again
+        </button>
+      </div>
+      <div id="scoreboard" style={styles.scoreboard}>
+        {player1Name}: {player1Score} | {player2Name}: {player2Score}
+        {/* {user?.username || 'Player1'}: {player1Score} | player2Name: {player2Score} */}
+      </div>
+      <canvas id="renderCanvas" ref={canvasRef} style={styles.canvas} aria-label="Pong game canvas" />
+    </div>
+  );
+};
+
+export default SmartPong;
