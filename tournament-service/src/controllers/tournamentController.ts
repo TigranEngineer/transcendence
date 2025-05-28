@@ -55,9 +55,11 @@ export const recordMatchResultController = async (request: FastifyRequest, reply
 
 export const playVsPlayerController = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
+    
     const { secondPlayerId, isHostWinner } = request.body as PlayVsPlayerRequest;
     const hostId = (request.user as any).id;
-
+    console.log(`second player id = ${secondPlayerId}`);
+    console.log(`second player bool = ${isHostWinner}`);
     const result = await recordVsPlayerMatch(hostId, secondPlayerId, isHostWinner);
     reply.status(200).send({ message: 'Match recorded successfully', result });
   } catch (error) {

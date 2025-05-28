@@ -24,3 +24,9 @@ export interface RegisterRequest {
     createdAt: string;
     profilePhoto?: string;
   }
+
+  export interface RecordMatchResultRequest {
+    matchId: number;
+    winnerId: number;
+  }
+  

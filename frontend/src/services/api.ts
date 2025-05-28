@@ -1,12 +1,21 @@
 import axios from 'axios';
-import { RegisterRequest, LoginRequest, AuthResponse, UserResponse } from '../types/auth';
+import { RegisterRequest, LoginRequest, AuthResponse, UserResponse, RecordMatchResultRequest } from '../types/auth';
 
 const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
 const CHAT_SERVICE_URL = 'http://localhost:4000';
+const TOURNAMENT_SERVICE_URL = 'http://localhost:3004';
 
 const userApi = axios.create({
   baseURL: USER_SERVICE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+});
+
+const tournamentApi = axios.create({
+  baseURL: TOURNAMENT_SERVICE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -52,6 +61,27 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
     throw error;
   }
 };
+
+
+
+export const pvp = async (token : string, secondPlayerId : number, isHostWinner : boolean): Promise<RecordMatchResultRequest> => {
+  try {
+    console.log(`second player id = ${secondPlayerId}`);
+    console.log(`second player bool = ${isHostWinner}`);
+
+    const response = await tournamentApi.post<RecordMatchResultRequest>('/api/tournament/play-vs-player', { secondPlayerId,  isHostWinner}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('Login response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Login error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
 
 
 export const updateUsername = async (username: string, token: string): Promise<UserResponse> => {

@@ -13,6 +13,7 @@ fastify.register(cors, {
   credentials: true,
 });
 
+fastify.register(tournamentRoutes);
 fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'your-secret-key',
 });
