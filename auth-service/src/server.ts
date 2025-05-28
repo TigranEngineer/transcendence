@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import jwt from '@fastify/jwt';
 import cors from '@fastify/cors';
 import { authRoutes } from './routes/authRoutes';
+import { authenticate } from './middlewares/authMiddleware';
 
 const fastify = Fastify({ logger: true });
 
@@ -15,6 +16,8 @@ fastify.register(cors, {
 fastify.register(jwt, {
     secret: process.env.JWT_SECRET || 'your-secret-key',
 });
+
+fastify.decorate('authenticate', authenticate);
 
 fastify.register(authRoutes);
 

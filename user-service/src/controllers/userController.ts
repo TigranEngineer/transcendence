@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { UserService } from '../services/userService';
+import { CustomError, UserService } from '../services/userService';
 
 // Define the expected shape of params
 interface GetByIdParam {
@@ -42,6 +42,46 @@ export const userController = {
       return reply.send(user);
     } catch (error) {
       return reply.status(404).send({ error: 'User not found' });
+    }
+  },
+
+  async changeUsername(req: FastifyRequest, reply: FastifyReply) {
+    const { username, id } = req.body as { username: string; id: number };
+    const userService = new UserService();
+
+    if (!username) {
+      return reply.status(400).send({ error: 'Bad request' });
+    }
+
+    try {
+      const user = await userService.updateUsername(id, username);
+      console.log(JSON.stringify(user, undefined, 2));
+      return reply.send(user);
+    } catch (error) {
+      if (error instanceof CustomError) {
+        reply.status(400).send({ error: error.message });
+      }
+      return reply.status(500).send({ error: 'Failed to update username' });
+    }
+  },
+
+  async changePhoto(req: FastifyRequest, reply: FastifyReply) {
+    const { photo, id } = req.body as { photo: string; id: number };
+    const userService = new UserService();
+
+    if (!photo) {
+      return reply.status(400).send({ error: 'Bad request' });
+    }
+
+    try {
+      const user = await userService.updatePhoto(id, photo);
+      console.log(JSON.stringify(user, undefined, 2));
+      return reply.send(user);
+    } catch (error) {
+      if (error instanceof CustomError) {
+        reply.status(400).send({ error: error.message });
+      }
+      return reply.status(500).send({ error: 'Failed to update username' });
     }
   },
 };

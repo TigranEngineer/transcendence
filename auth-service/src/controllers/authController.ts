@@ -1,9 +1,19 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from '../services/authService';
+import { validateEmail, validatePassword } from '../utils/validator'
 
 export const authController = {
     async register(req: FastifyRequest, reply: FastifyReply) {
         const { username, email, password } = req.body as { username: string; email: string; password: string };
+        if (!email || !username || !password) {
+            return reply.status(400).send({ error: 'All fields are required' });
+        }
+        if (!validateEmail(email)) {
+            return reply.status(400).send({ error: 'Invalid email format' });
+        }
+        if (!validatePassword(password)) {
+            return reply.status(400).send({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)' });
+        }
         const authService = new AuthService(req.server);
         try {
             const result = await authService.register(username, email, password);
@@ -31,6 +41,22 @@ export const authController = {
             return reply.status(200).send({ message: 'Logged out' });
         } catch (error) {
             return reply.status(500).send({ error: 'Logout failed' });
+        }
+    },
+
+    async changePassword(req: FastifyRequest, reply: FastifyReply) {
+        const { id, password } = req.body as { id: number; password: string };
+
+        if (!validatePassword(password)) {
+            return reply.status(400).send({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)' });
+        }
+
+        const authService = new AuthService(req.server);
+        try {
+            const result = await authService.updatePassword(id, password);
+            return reply.send(result);
+        } catch (error) {
+            return reply.status(500).send({ error: 'Failed to update password' });
         }
     },
 };

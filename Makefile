@@ -6,9 +6,9 @@ reset := \033[0m
 red := \033[31m
 
 ifeq ($(UNAME), Darwin)
-	DOCKER_COMPOSE = docker-compose
+	DOCKER_COMPOSE = sudo docker-compose
 else
-	DOCKER_COMPOSE = docker compose
+	DOCKER_COMPOSE = sudo docker compose
 endif
 
 all: up

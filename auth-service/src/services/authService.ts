@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 
+// const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 export class AuthService {
     private prisma: PrismaClient;
     private fastify: any;
@@ -42,6 +43,20 @@ export class AuthService {
     }
 
     async logout() {
-        // Handle logout logic if needed
+    }
+
+    async updatePassword(userId: number, newPassword: string) {
+        try {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+            const updatedUser = await this.prisma.userAuth.update({
+                where: { userId },
+                data: { password: hashedPassword },
+            });
+
+            return updatedUser;
+        } catch (error) {
+            throw error;
+        }
     }
 }

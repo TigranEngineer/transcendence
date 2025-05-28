@@ -3,7 +3,7 @@ import { UserService, CustomError } from '../services/userService';
 
 async function blockUser(req: FastifyRequest, reply: FastifyReply) {
     try {
-        const { id, blockedId } = req.body as { id: string, blockedId: number };
+        const { id, blockedId } = req.body as { id: number, blockedId: number };
         console.log(`id = ${id}`);
         console.log(`Block id = ${blockedId}`); // Assuming userId is in headers
         if (!id) {
