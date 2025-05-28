@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -22,7 +21,7 @@ const SmartPong: React.FC = () => {
   const [showMenu, setShowMenu] = useState(true);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [winnerText, setWinnerText] = useState('');
-  const input = useRef<{ w: boolean, s: boolean, arrowup: boolean, arrowdown: boolean }>({ w: false, s: false, arrowup: false, arrowdown: false });
+  const input = useRef<{ w: boolean; s: boolean; arrowup: boolean; arrowdown: boolean }>({ w: false, s: false, arrowup: false, arrowdown: false });
   const lastWallHit = useRef<string | null>(null);
   const gameRunning = useRef(false);
   const isGamePaused = useRef(false);
@@ -133,7 +132,8 @@ const SmartPong: React.FC = () => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (key in input.current) {
+      if (['w', 's', 'arrowup', 'arrowdown'].includes(key)) {
+        e.preventDefault(); // Prevent scrolling
         input.current[key as keyof typeof input.current] = true;
       }
     };
@@ -341,7 +341,7 @@ const SmartPong: React.FC = () => {
   const styles: { [key: string]: React.CSSProperties } = {
     container: {
       width: '100%',
-      height: '100%',
+      height: '100vh',
       margin: 0,
       overflow: 'hidden',
       background: 'linear-gradient(to bottom, #0f2027, #203a43, #2c5364)',
