@@ -1,30 +1,90 @@
-export interface RegisterRequest {
-    email: string;
-    password: string;
-    username?: string;
-    // Add other fields as needed
-  }
-  
-  export interface LoginRequest {
-    email: string;
-    password: string;
-  }
-  
-  export interface AuthResponse {
-    token: string;
-    user: UserResponse;
-  }
-  
-  export interface UserResponse {
-    id: string;
-    username: string;
-    email: string;
-    // Add other user fields as needed
-  }
-  
-  // Add this if it's missing
-  export interface RegisterResponse {
-    token?: string; // Adjust based on your API response
-    user?: UserResponse;
-    message?: string;
-  }
+version: '3.8'
+
+services:
+  database:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./data.db"
+    ports:
+      - "3002:3002"
+    networks:
+      - app-network
+    volumes:
+      - ./database/prisma:/app/prisma
+      - ./data.db:/app/data.db
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./data.db"
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    volumes:
+      - ./database/prisma:/app/prisma
+      - ./data.db:/app/data.db
+    depends_on:
+      - database
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./data.db"
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    volumes:
+      - ./localhost-key.pem:/app/localhost-key.pem
+      - ./localhost.pem:/app/localhost.pem
+      - ./data.db:/app/data.db
+      - ./database/prisma:/app/prisma
+    depends_on:
+      - database
+
+  chat-service:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    environment:
+      JWT_SECRET: "your-secret-key"
+      DATABASE_URL: "file:./data.db"
+    ports:
+      - "4000:4000"
+    networks:
+      - app-network
+    volumes:
+      - ./data.db:/app/data.db
+      - ./database/prisma:/app/prisma
+    depends_on:
+      - database
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    networks:
+      - app-network
+    depends_on:
+      - user-service
+      - auth-service
+      - chat-service
+
+volumes:
+  database:
+
+networks:
+  app-network:
+    driver: bridge

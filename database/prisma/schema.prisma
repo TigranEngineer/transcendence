@@ -4,8 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL") 
-  // url      = "file:./data.db"
+  url      = env("DATABASE_URL")
 }
 
 model UserAuth {
@@ -13,6 +12,8 @@ model UserAuth {
   email    String @unique
   password String
   userId   Int    @unique
+  twoFactorSecret  String? // Store TOTP secret
+  twoFactorEnabled Boolean @default(false) // 2FA status
 }
 
 model User {
