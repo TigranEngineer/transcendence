@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { register } from '../services/api';
+import { register, setup2FA } from '../services/api';
 import { RegisterRequest } from '../types/auth';
 
 const Register: React.FC = () => {
@@ -12,6 +12,8 @@ const Register: React.FC = () => {
     password: '',
   });
 
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [message, setMessage] = useState('');
   console.log('Register component rendered'); // Debug log
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,11 +30,27 @@ const Register: React.FC = () => {
       console.log('Registration successful:', response); // Debug log
       localStorage.setItem('token', response.token);
       localStorage.setItem('id', response.user.id.toString());
+      setQrCodeUrl(response.qrCodeUrl || '');
+      setMessage('Registration successful. Scan the QR code to set up 2FA.');
       toast.success('Registration successful');
       navigate(`/profile/${localStorage.getItem('id')}`);
     } catch (error: any) {
       console.error('Registration failed in component:', error.response?.data || error.message); // Debug log
       toast.error(error.response?.data?.error || 'Registration failed');
+    }
+  };
+
+  const handle2FASetup = async () => {
+    try {
+      await setup2FA(formData.email, formData.password);
+      setQrCodeUrl('');
+      setMessage('2FA enabled successfully');
+      toast.success('2FA enabled successfully');
+      navigate(`/profile/${localStorage.getItem('id')}`);
+    } catch (error: any) {
+      console.error('2FA setup failed:', error.response?.data || error.message); // Debug log
+      setMessage(error.response?.data?.error || '2FA setup failed');
+      toast.error(error.response?.data?.error || '2FA setup failed');
     }
   };
 
@@ -92,6 +110,19 @@ const Register: React.FC = () => {
             Register
           </button>
         </form>
+        {qrCodeUrl && (
+          <div className="mt-4">
+            <p className="text-gray-600 mb-2">Scan this QR code with an authenticator app:</p>
+            <img src={qrCodeUrl} alt="2FA QR Code" className="my-2" />
+            <button
+              onClick={handle2FASetup}
+              className="w-full bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-all duration-300"
+            >
+              Enable 2FA
+            </button>
+          </div>
+        )}
+        {message && <p className="mt-2 text-red-500">{message}</p>}
       </div>
     </div>
   );

@@ -1,0 +1,30 @@
+export interface RegisterRequest {
+    email: string;
+    password: string;
+    username?: string;
+    // Add other fields as needed
+  }
+  
+  export interface LoginRequest {
+    email: string;
+    password: string;
+  }
+  
+  export interface AuthResponse {
+    token: string;
+    user: UserResponse;
+  }
+  
+  export interface UserResponse {
+    id: string;
+    username: string;
+    email: string;
+    // Add other user fields as needed
+  }
+  
+  // Add this if it's missing
+  export interface RegisterResponse {
+    token?: string; // Adjust based on your API response
+    user?: UserResponse;
+    message?: string;
+  }

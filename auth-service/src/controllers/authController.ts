@@ -2,6 +2,15 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from '../services/authService';
 import { validateEmail, validatePassword } from '../utils/validator'
 
+import { Session } from '@fastify/secure-session';
+////////////////
+// Extend FastifyRequest with proper session and user types
+interface AuthRequest extends FastifyRequest {
+    session: Session;
+    user?: any; // Temporary any; refine if you have a User type
+  }
+  
+/////////////////
 export const authController = {
     async register(req: FastifyRequest, reply: FastifyReply) {
         const { username, email, password } = req.body as { username: string; email: string; password: string };
@@ -27,13 +36,41 @@ export const authController = {
         const { email, password } = req.body as { email: string; password: string };
         const authService = new AuthService(req.server);
         try {
-            const result = await authService.login(email, password);
-            return reply.send(result);
+            const result = await authService.login(email, password, req.session);            return reply.send(result);
+            // const result = await authService.login(email, password);
         } catch (error) {
             return reply.status(401).send({ error: 'Invalid credentials' });
         }
     },
+//////////////////////////
+    async setup2FA(req: FastifyRequest, reply: FastifyReply) {
+        const user = req.user as any;
+        const authService = new AuthService(req.server);
+        try {
+          const result = await authService.setup2FA(user.userId);
+          return reply.send(result);
+        } catch (error) {
+          return reply.status(500).send({ error: '2FA setup failed' });
+        }
+      },
+    
+      async verify2FA(req: FastifyRequest, reply: FastifyReply) {
+        const { code } = req.body as { code: string };
+        const userId = req.session.get('userId');
+        if (!userId) return reply.status(401).send({ error: 'Session expired' });
+    
+        const authService = new AuthService(req.server);
+        try {
+          const result = await authService.verify2FA(userId, code);
+        //   req.session.set('userId', null);
+        req.session.delete(); // Clear session after successful 2FA
 
+          return reply.send(result);
+        } catch (error) {
+          return reply.status(401).send({ error: 'Invalid 2FA code' });
+        }
+      },
+////////////////////////////
     async logout(req: FastifyRequest, reply: FastifyReply) {
         const authService = new AuthService(req.server);
         try {

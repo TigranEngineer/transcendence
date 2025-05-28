@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { RegisterRequest, LoginRequest, AuthResponse, UserResponse } from '../types/auth';
 
+const API_URL = 'http://localhost:3001/api/auth'; // Base URL for auth-service
+
 const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
 const CHAT_SERVICE_URL = 'http://localhost:4000';
@@ -29,18 +31,18 @@ const chatApi = axios.create({
   withCredentials: true,
 });
 
+/////////////
+
 export const register = async (data: RegisterRequest): Promise<AuthResponse> => {
-  console.log('Sending registration request:', data);
   try {
-    const response = await authApi.post<AuthResponse>('/api/auth/register', data);
-    console.log('Registration response:', response.data);
+    const response = await axios.post<AuthResponse>(`${API_URL}/register`, data);
     return response.data;
   } catch (error: any) {
-    console.error('Registration error:', error.response?.data || error.message);
-    throw error;
+    throw new Error(error.response?.data?.error || 'Registration failed');
   }
 };
 
+///////////////
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
   console.log('Sending login request:', data);
   try {
@@ -52,7 +54,28 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
     throw error;
   }
 };
+////////////////
+export const setup2FA = async (email: string, password: string): Promise<{ message: string }> => {
+  try {
+    const response = await axios.post<{ message: string }>(`${API_URL}/2fa/setup`, { email, password });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || '2FA setup failed');
+  }
+};
 
+export const verify2FA = async (code: string): Promise<AuthResponse> => {
+  console.log('Sending 2FA verify request');
+  try {
+    const response = await authApi.post<AuthResponse>('/api/auth/2fa/verify', { code });
+    console.log('2FA verify response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('2FA verify error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+////////////////
 export const logout = async (): Promise<void> => {
   console.log('Sending logout request');
   try {
