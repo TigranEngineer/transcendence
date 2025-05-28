@@ -22,6 +22,6 @@ RUN npm run build
 EXPOSE 3001
 
 # Run migrations and start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+# CMD ["sh", "-c", "npx prisma migrate deploy && npm run dev"]
 # Development alternative:
-# CMD ["sh", "-c", "npx prisma migrate dev --name init && npm run dev"]
+CMD ["sh", "-c", "npx prisma migrate dev --name init && npm run dev"]

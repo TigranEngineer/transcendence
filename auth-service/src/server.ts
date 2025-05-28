@@ -25,8 +25,8 @@ fastify.register(jwt, {
  ///////////////// 
   // Configure secure session
   fastify.register(secureSession, {
-    secret: process.env.SESSION_SECRET || 'your-session-secret',
-    salt: process.env.SESSION_SALT || 'your-session-salt'
+    secret: process.env.SESSION_SECRET || 'your-session-secretyour-session-secretyour-session-secretyour-session-secretyour-session-secretyour-session-secretyour-session-secretyour-session-secret',
+    salt: process.env.SESSION_SALT || '1234567890123456'
   });
   
   // Initialize passport
