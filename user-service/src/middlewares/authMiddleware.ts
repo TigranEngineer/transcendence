@@ -34,7 +34,7 @@ export const authenticate = async (request: FastifyRequest, reply: FastifyReply)
       return reply.status(401).send({ error: 'User not found' });
     }
 
-    request.user = { id: userId };
+    request.body = { ...request.body as Record<string, any>, id: userId };
 
   } catch (error) {
     console.error('Authentication error:', error);
