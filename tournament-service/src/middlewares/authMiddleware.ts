@@ -1,13 +1,13 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import jwt from '@fastify/jwt';
+import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 interface AuthPayload {
   userId: number;
-  iat: number; // Issued at
-  exp: number; // Expiration
+  iat: number;
+  exp: number;
 }
 
 export const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -17,8 +17,6 @@ export const authenticate = async (request: FastifyRequest, reply: FastifyReply)
       return reply.status(401).send({ error: 'No token provided or invalid format' });
     }
 
-    const token = authHeader.split(' ')[1];
-
     const decoded = await request.jwtVerify() as AuthPayload;
     const userId = decoded.userId;
 
@@ -26,16 +24,7 @@ export const authenticate = async (request: FastifyRequest, reply: FastifyReply)
       return reply.status(401).send({ error: 'Invalid token payload' });
     }
 
-    const userAuth = await prisma.userAuth.findUnique({
-      where: { userId },
-    });
-
-    if (!userAuth) {
-      return reply.status(401).send({ error: 'User not found' });
-    }
-
-    request.body = { ...request.body as Record<string, any>, id: userId };
-
+    request.user = { id: userId };
   } catch (error) {
     console.error('Authentication error:', error);
     return reply.status(401).send({ error: 'Invalid token' });

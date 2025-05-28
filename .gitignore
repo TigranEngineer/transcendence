@@ -7,4 +7,3 @@ database/*/prisma/migrations/
 database/*/prisma/*db*
 database/prisma/*db*
 database/prisma/migrations/
-./Makefile

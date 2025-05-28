@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt'
 import { userRoutes } from './routes/userRoutes';
-import { authenticate } from './middlewares/userMiddleware';
+import { authenticate } from './middlewares/authMiddleware';
 
 const fastify = Fastify({ logger: true });
 
