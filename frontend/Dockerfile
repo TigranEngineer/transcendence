@@ -10,6 +10,9 @@ COPY package.json package-lock.json ./
 # Устанавливаем зависимости, включая Babylon.js
 RUN npm install
 RUN npm install @babylonjs/core @babylonjs/loaders
+RUN npm install i18next-http-backend
+RUN npm install i18next react-i18next i18next-browser-languagedetector
+
 
 # Копируем остальной код фронтенда
 COPY . .

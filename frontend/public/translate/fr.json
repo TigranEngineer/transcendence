@@ -1,0 +1,18 @@
+{
+    "profile": "Profil",
+    "username": "Nom d'utilisateur",
+    "played": "Parties jouées",
+    "wins": "Victoires",
+    "joined": "Inscrit le",
+    "add_friend": "Ajouter comme ami",
+    "block_user": "Bloquer l'utilisateur",
+    "friend_added": "Ami ajouté !",
+    "user_blocked": "Utilisateur bloqué !",
+    "error": "Erreur",
+    "loading": "Chargement...",
+    "fetch_error": "Échec du chargement des données",
+    "login_error": "Veuillez vous connecter pour voir votre profil",
+    "play_ai": "Jouer contre l'IA",
+    "play_user": "Jouer contre un utilisateur"
+  }
+  

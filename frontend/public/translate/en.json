@@ -1,0 +1,18 @@
+{
+    "profile": "Profile",
+    "username": "Username",
+    "played": "Played",
+    "wins": "Wins",
+    "joined": "Joined",
+    "add_friend": "Add Friend",
+    "block_user": "Block User",
+    "friend_added": "Friend added!",
+    "user_blocked": "User blocked!",
+    "error": "Error",
+    "loading": "Loading...",
+    "fetch_error": "Failed to fetch user data",
+    "login_error": "Please log in to view your profile",
+    "play_ai": "Play with AI",
+    "play_user": "Play with User"
+  }
+  
