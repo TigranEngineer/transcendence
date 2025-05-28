@@ -8,13 +8,12 @@ const Navbar: React.FC = () => {
   const token = localStorage.getItem('token');
   const [searchUsername, setSearchUsername] = useState('');
 
-
   const handleLogout = async () => {
     try {
-      await logout();
+      if (token) await logout();
       localStorage.removeItem('token');
       toast.success('Logged out successfully');
-      navigate('');
+      navigate('/');
     } catch (error) {
       toast.error('Logout failed');
     }
@@ -22,8 +21,9 @@ const Navbar: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchUsername) {
-      navigate(`/profile/${searchUsername}`);
+    const trimmed = searchUsername.trim();
+    if (trimmed) {
+      navigate(`/profile/${trimmed}`);
     }
     setSearchUsername('');
   };
@@ -45,6 +45,7 @@ const Navbar: React.FC = () => {
               onChange={(e) => setSearchUsername(e.target.value)}
               placeholder="Search username..."
               className="p-2 rounded-l-md text-black w-full sm:w-auto focus:outline-none"
+              aria-label="Search username"
             />
             <button
               type="submit"
@@ -60,12 +61,12 @@ const Navbar: React.FC = () => {
           >
             Profile
           </Link>
-          <Link
+          {/* <Link
             to="/chat"
             className="hover:text-gray-200 transition duration-300 font-medium"
           >
             Chat
-          </Link>
+          </Link> */}
           <button
             onClick={handleLogout}
             className="hover:text-gray-200 transition duration-300 font-medium"
