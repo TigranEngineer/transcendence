@@ -12,9 +12,7 @@ export interface RegisterRequest {
   export interface AuthResponse {
     token: string;
     user: {
-      profilePhoto: any;
       id: number;
-      username: string;
       email: string;
     };
   }

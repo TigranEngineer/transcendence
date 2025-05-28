@@ -54,12 +54,11 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
 };
 
 
-export const updateUsername = async (username: string, token: string): Promise<AuthResponse> => {
+export const updateUsername = async (username: string, token: string): Promise<UserResponse> => {
   console.log('Sending login request:', token);
   try {
-    const id = 0;
     console.log(`token = ${token}`);
-    const response = await authApi.patch<AuthResponse>('/api/user/change/username', { username }, {
+    const response = await userApi.patch<UserResponse>('/api/users/change/username', { username }, {
       headers: { Authorization: `Bearer ${token}` },
     });
     console.log('Username update response:', response.data);
@@ -70,10 +69,10 @@ export const updateUsername = async (username: string, token: string): Promise<A
   }
 };
 
-export const updateUserImage = async (base64Image: string, token: string): Promise<AuthResponse> => {
+export const updateUserImage = async (base64Image: string, token: string): Promise<UserResponse> => {
   try {
-    const response = await authApi.patch<AuthResponse>(
-      '/api/user/change/image',
+    const response = await userApi.patch<UserResponse>(
+      '/api/users/change/image',
       { image: base64Image },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -91,7 +90,6 @@ export const updateUserImage = async (base64Image: string, token: string): Promi
 export const updatePassword = async (password: string, token: string): Promise<AuthResponse> => {
   console.log('Sending login request:', password);
   try {
-    const id = 0;
     console.log(`token = ${token}`);
     console.log(`password = ${password}`);
     const response = await authApi.patch<AuthResponse>('/api/auth/change/password', { password }, {

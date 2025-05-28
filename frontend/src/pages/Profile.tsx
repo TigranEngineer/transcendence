@@ -40,7 +40,7 @@ const Profile: React.FC = () => {
     };
 
     fetchUser();
-  }, [navigate, token, id, username]);
+  }, [navigate, token, id, username, t]);
 
   const handleAddFriend = async () => {
     if (id && token && user && user.id !== parseInt(id)) {
@@ -79,8 +79,9 @@ const Profile: React.FC = () => {
   
       try {
         setIsSaving(true);
+        console.log(`photo as string = ${base64Image}`);
         const response = await updateUserImage(base64Image, token);
-        setUser(prev => prev ? { ...prev, profilePhoto: response.user.profilePhoto } : null);
+        setUser(prev => prev ? { ...prev, profilePhoto: response.profilePhoto } : null);
         toast.success('Profile picture updated successfully');
       } catch (error: any) {
         toast.error(error.response?.data?.error || 'Failed to update profile picture');
@@ -117,7 +118,7 @@ const Profile: React.FC = () => {
     try {
       setIsSaving(true);
       const response = await updateUsername(newNickname, token);
-      setUser(prev => prev ? { ...prev, username: response.user.username } : null); // Update user state
+      setUser(prev => prev ? { ...prev, username: response.username } : null); // Update user state
       toast.success('Nickname updated successfully');
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to update nickname');

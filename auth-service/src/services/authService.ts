@@ -20,7 +20,7 @@ export class AuthService {
             const auth = await this.prisma.userAuth.create({
                 data: { email, password: hashedPassword, userId },
             });
-            const token = this.fastify.jwt.sign({ id: userId });
+            const token = this.fastify.jwt.sign({ userId: userId });
             return { token, user: { id: userId, email } };
         } catch (error) {
             console.error('Auth error:', error);
@@ -32,7 +32,7 @@ export class AuthService {
         try {
             const auth = await this.prisma.userAuth.findUnique({ where: { email } });
             if (auth && await bcrypt.compare(password, auth.password)) {
-                const token = this.fastify.jwt.sign({ id: auth.userId });
+                const token = this.fastify.jwt.sign({ userId: auth.userId });
                 return { token, user: { id: auth.userId, email } };
             }
             throw new Error('Invalid credentials');

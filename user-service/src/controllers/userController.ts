@@ -66,15 +66,16 @@ export const userController = {
   },
 
   async changePhoto(req: FastifyRequest, reply: FastifyReply) {
-    const { photo, id } = req.body as { photo: string; id: number };
+    const { image, id } = req.body as { image: string; id: number };
     const userService = new UserService();
 
-    if (!photo) {
+    console.log(`photo as string = ${image}`);
+    if (!image) {
       return reply.status(400).send({ error: 'Bad request' });
     }
 
     try {
-      const user = await userService.updatePhoto(id, photo);
+      const user = await userService.updatePhoto(id, image);
       console.log(JSON.stringify(user, undefined, 2));
       return reply.send(user);
     } catch (error) {
