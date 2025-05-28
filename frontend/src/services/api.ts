@@ -53,6 +53,58 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
   }
 };
 
+
+export const updateUsername = async (username: string, token: string): Promise<AuthResponse> => {
+  console.log('Sending login request:', token);
+  try {
+    const id = 0;
+    console.log(`token = ${token}`);
+    const response = await authApi.patch<AuthResponse>('/api/user/change/username', { username }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('Username update response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Username update error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const updateUserImage = async (base64Image: string, token: string): Promise<AuthResponse> => {
+  try {
+    const response = await authApi.patch<AuthResponse>(
+      '/api/user/change/image',
+      { image: base64Image },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log('Image update response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Image update error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+export const updatePassword = async (password: string, token: string): Promise<AuthResponse> => {
+  console.log('Sending login request:', password);
+  try {
+    const id = 0;
+    console.log(`token = ${token}`);
+    console.log(`password = ${password}`);
+    const response = await authApi.patch<AuthResponse>('/api/auth/change/password', { password }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('Password update response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Password update error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const logout = async (): Promise<void> => {
   console.log('Sending logout request');
   try {
