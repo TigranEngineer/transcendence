@@ -10,6 +10,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3003',
+  'https://localhost:8443',
   process.env.GOOGLE_REDIRECT_URI
 ].filter((origin): origin is string => typeof origin === 'string');
 

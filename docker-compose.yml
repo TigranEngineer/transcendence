@@ -103,11 +103,17 @@ services:
       - tournament-service
 
   nginx:
-    image: nginx:latest
+    container_name: nginx
+    # image: nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
-      - "3004:3004"
+      - "8080:80"
+      - "8443:443"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/tools:/etc/nginx/ssl/
+      - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - frontend
       - user-service
