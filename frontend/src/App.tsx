@@ -11,6 +11,7 @@ import PVP from './pages/PVP';
 import TwoFactorAuth from './pages/TwoFactorAuth';
 import GoogleLogin from './pages/GoogleLogin';
 import GoogleCallback from './pages/GoogleCallback';
+import Tournament from './pages/Tournament';
 
 const App: React.FC = () => {
   return (
@@ -29,6 +30,7 @@ const App: React.FC = () => {
         <Route path="/2fa" element={<TwoFactorAuth />} />
         <Route path="/google-login" element={<GoogleLogin />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
+        <Route path="/tournament" element={<Tournament />} />
       </Routes>
       <ToastContainerWrapper />
     </BrowserRouter>

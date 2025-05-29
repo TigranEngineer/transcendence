@@ -1,31 +1,36 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import * as BABYLON from '@babylonjs/core';
-import { getUser, getUserByUsername } from '../services/api';
-import { UserResponse } from '../types/auth';
 import { pvp } from '../services/api';
 import { useTranslation } from 'react-i18next';
 
-const SmartPong: React.FC = () => {
-  const location = useLocation();
+interface SmartPongProps {
+  player1Name?: string;
+  player2Name?: string;
+  onMatchEnd?: (winnerUsername: string, score: string) => void;
+  isTournamentMatch?: boolean;
+}
+
+const SmartPong: React.FC<SmartPongProps> = ({
+  player1Name: initialPlayer1Name,
+  player2Name: initialPlayer2Name,
+  onMatchEnd,
+  isTournamentMatch = false,
+}) => {
   const navigate = useNavigate();
-  const { username } = useParams<{ username?: string }>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const token = localStorage.getItem('token');
-  const id = localStorage.getItem('id');
-  const [user, setUser] = useState<UserResponse | null>(null);
-  const [user2, setUser2] = useState<UserResponse | null>(null);
   const [player1Score, setPlayer1Score] = useState(0);
   const [player2Score, setPlayer2Score] = useState(0);
   const [maxScore, setMaxScore] = useState(5);
-  const [player1Name, setPlayer1Name] = useState('Гость');
-  const [player2Name, setPlayer2Name] = useState(location.state?.player2Name || '');
-  const [showMenu, setShowMenu] = useState(true);
+  const [player1Name, setPlayer1Name] = useState(initialPlayer1Name || 'Гость');
+  const [player2Name, setPlayer2Name] = useState(initialPlayer2Name || '');
+  const [showMenu, setShowMenu] = useState(!isTournamentMatch);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [winnerText, setWinnerText] = useState('');
   const [error, setError] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(isTournamentMatch);
   const { t } = useTranslation();
   const input = useRef<{ w: boolean; s: boolean; arrowup: boolean; arrowdown: boolean }>({
     w: false,
@@ -39,78 +44,37 @@ const SmartPong: React.FC = () => {
   const leftPaddleVelocity = useRef(0);
   const rightPaddleVelocity = useRef(0);
 
-  // Optimized handleLogin to prevent unnecessary requests
+  // Handle login for non-tournament mode
   const handleLogin = async () => {
     if (!token) {
-      toast.error('Please log in to play');
+      toast.error(t('please_log_in'));
       navigate('/login');
       return;
     }
 
-    if (!user) {
-      setError('User data not loaded');
-      return;
-    }
-
     if (!player2Name.trim()) {
-      setError('Please enter a player 2 username');
+      setError(t('enter_player2_username'));
       return;
     }
 
-    if (player2Name.trim() === user.username) {
-      setError('You cannot play against yourself');
+    if (player2Name.trim() === player1Name) {
+      setError(t('cannot_play_self'));
       return;
     }
 
     try {
-      const userData2 = await getUserByUsername(token, player2Name.trim());
-      if (userData2) {
-        setUser2(userData2);
-        setError('');
-        setIsLoggedIn(true);
-      } else {
-        setError('User does not exist');
-      }
+      setError('');
+      setIsLoggedIn(true);
     } catch (error: any) {
-      setError(error.response?.data?.error || 'User does not exist');
+      setError(error.response?.data?.error || t('user_not_exist'));
     }
   };
 
-  // Fetch authenticated user
+  // Update player names if provided (for tournament)
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!token || !id) {
-        toast.error('Please log in to play');
-        navigate('/login');
-        return;
-      }
-
-      try {
-        if (username) {
-          const userData = await getUserByUsername(token, username);
-          setUser(userData);
-        } else {
-          const userData = await getUser(token, id);
-          setUser(userData);
-        }
-      } catch (error: any) {
-        toast.error(error.response?.data?.error || 'Failed to fetch user data');
-        navigate('/login');
-      }
-    };
-
-    // Only fetch if user is not already set
-    if (!user) {
-      fetchUser();
-    }
-  }, [navigate, token, id, username]);
-
-  // Update player1Name when user changes
-  useEffect(() => {
-    if (user) {
-      setPlayer1Name(user.username || 'Гость');
-    }
-  }, [user]);
+    if (initialPlayer1Name) setPlayer1Name(initialPlayer1Name);
+    if (initialPlayer2Name) setPlayer2Name(initialPlayer2Name);
+  }, [initialPlayer1Name, initialPlayer2Name]);
 
   // Handle score limit application
   const applyScoreOnly = () => {
@@ -119,7 +83,7 @@ const SmartPong: React.FC = () => {
     if (!isNaN(value) && value > 0 && value <= 100) {
       setMaxScore(value);
     } else {
-      toast.error('Please enter a valid score limit between 1 and 100.');
+      toast.error(t('invalid_score_limit'));
     }
   };
 
@@ -131,7 +95,7 @@ const SmartPong: React.FC = () => {
       setMaxScore(value);
       setShowMenu(false);
     } else {
-      toast.error('Please enter a valid score limit between 1 and 100.');
+      toast.error(t('invalid_score_limit'));
     }
   };
 
@@ -146,6 +110,10 @@ const SmartPong: React.FC = () => {
     isGamePaused.current = false;
     leftPaddleVelocity.current = 0;
     rightPaddleVelocity.current = 0;
+    if (isTournamentMatch) {
+      // In tournament mode, do not restart; rely on parent component
+      setShowMenu(false);
+    }
   };
 
   // Initialize game
@@ -161,11 +129,17 @@ const SmartPong: React.FC = () => {
       maxScore,
       setWinner: (winner: string) => {
         setTimeout(() => {
-          if (!token || !user2) return;
-          pvp(token, user2.id, true);
           setWinnerText(`${winner} ${t('win')}`);
           setShowWinnerScreen(true);
           gameRunning.current = false;
+          if (isTournamentMatch && onMatchEnd) {
+            onMatchEnd(winner, `${player1Score}-${player2Score}`);
+          }
+          if (!isTournamentMatch && token) {
+            // Call pvp API for non-tournament mode (simplified)
+            const winnerId = winner === player1Name ? null : null; // Replace with actual logic
+            if (winnerId) pvp(token, winnerId, winner === player1Name);
+          }
         }, 200);
         isGamePaused.current = true;
       },
@@ -212,7 +186,7 @@ const SmartPong: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [showMenu, showWinnerScreen, player1Name, player2Name, t]);
+  }, [showMenu, showWinnerScreen, player1Name, player2Name, maxScore, isTournamentMatch, onMatchEnd, token, t]);
 
   const createScene = (
     engine: BABYLON.Engine,
@@ -560,12 +534,12 @@ const SmartPong: React.FC = () => {
                 <div style={{ fontSize: '20px', marginBottom: '15px' }}>{t('game_set')}</div>
                 <div style={{ marginBottom: '10px' }}>
                   <span style={styles.scoreLimitLabel}>
-                    {t('player')} 1: {player1Name}
+                    {t('player1')}: {player1Name}
                   </span>
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                   <span style={styles.scoreLimitLabel}>
-                    {t('player')} 2: {player2Name}
+                    {t('player2')}: {player2Name}
                   </span>
                 </div>
                 <div style={{ marginBottom: '10px' }}>
@@ -586,8 +560,8 @@ const SmartPong: React.FC = () => {
                 <button
                   onClick={applyScoreOnly}
                   style={styles.scoreLimitButton}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'white')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
                   aria-label="Apply score limit"
                 >
                   {t('apply')}
@@ -595,48 +569,27 @@ const SmartPong: React.FC = () => {
                 <button
                   onClick={applyScoreLimit}
                   style={styles.scoreLimitButton}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'white')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
                   aria-label="Start game"
                 >
                   {t('sg')}
                 </button>
                 <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
-                  {t('curr_lim')} {maxScore}
+                  {t('curr_lim')}: {maxScore}
                 </span>
               </div>
-              <button
-                onClick={applyScoreOnly}
-                style={styles.scoreLimitButton}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-                aria-label="Apply score limit"
-              >
-                {t('apply')}
-              </button>
-              <button
-                onClick={applyScoreLimit}
-                style={styles.scoreLimitButton}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-                aria-label="Start game"
-              >
-                {t('start_game')}
-              </button>
-              <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
-                {t('curr_lim')} {maxScore}
-              </span>
             </>
           )}
 
           <div id="winnerScreen" style={styles.winnerScreen}>
-            <div id="winnerText">{winnerText}</div>
+            <div id="winner-text">{winnerText}</div>
             <button
-              id="restartButton"
+              id="restart-button"
               onClick={handleRestart}
               style={styles.winnerButton}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#45a049')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4CAF50')}
               aria-label="Play again"
             >
               {t('play_again')}

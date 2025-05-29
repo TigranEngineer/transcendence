@@ -208,6 +208,12 @@ const Profile: React.FC = () => {
           >
             {t('play_user')}
           </button>
+          <button
+            onClick={() => navigate('/tournament')}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Tournament
+          </button> 
         </div>
       </div>
 
