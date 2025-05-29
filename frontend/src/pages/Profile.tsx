@@ -1,113 +1,277 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getUser, getUserByUsername, addFriend, blockUser } from '../services/api';
-import { UserResponse } from '../types/auth';
+import { getUser, getUserByUsername, getStats, addFriend, blockUser, updatePassword, updateUsername, updateUserImage } from '../services/api';
+import { UserResponse, WinsAndGames } from '../types/auth';
+import { useTranslation } from 'react-i18next';
+// import { LanguageSwitcher } from '../components/Navbar';
+
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { username } = useParams<{ username?: string }>();
   const [user, setUser] = useState<UserResponse | null>(null);
   const [status, setStatus] = useState<string>('');
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [newNickname, setNewNickname] = useState<string>('');
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [stats, setStats] = useState<WinsAndGames | null>(null);
+
   const token = localStorage.getItem('token');
   const id = localStorage.getItem('id');
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const fetchUser = async () => {
       if (!token || !id) {
-        toast.error('Please log in to view your profile');
+        toast.error(t('login_error'));
         navigate('/Profile');
         return;
       }
 
       try {
-        if (username) {
-          const userData = await getUserByUsername(token, username);
-          setUser(userData);
-        } else {
-
-          const userData = await getUser(token, id);
-          setUser(userData);
+        const userData = username
+          ? await getUserByUsername(token, username)
+          : await getUser(token, id);
+        setUser(userData);
+        if (userData) {
+          const statsData = await getStats(token, userData.id.toString());
+          setStats(statsData);
         }
+        setNewNickname(userData.username);
       } catch (error: any) {
-        toast.error(error.response?.data?.error || 'Failed to fetch user data');
+        toast.error(error.response?.data?.error || t('fetch_error'));
         navigate('/Profile');
       }
     };
 
     fetchUser();
-  }, [navigate]);
-
-
-  const openAI = async () => {
-    navigate('/ai');
-  };
-
-  const openPVP = async () => {
-    navigate('/pvp');
-  };
+  }, [navigate, token, id, username, t]);
 
   const handleAddFriend = async () => {
     if (id && token && user && user.id !== parseInt(id)) {
       const result = await addFriend(id, user.id, token);
-      setStatus(result.success ? 'Friend added!' : `Error: ${result.error}`);
+      setStatus(result.success ? t('friend_added') : `${t('error')}: ${result.error}`);
     }
   };
 
   const handleBlockUser = async () => {
     if (id && token && user && user.id !== parseInt(id)) {
       const result = await blockUser(id, user.id, token);
-      setStatus(result.success ? 'User blocked!' : `Error: ${result.error}`);
+      setStatus(result.success ? t('user_blocked') : `${t('error')}: ${result.error}`);
     }
   };
+
+  const handleSaveImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error(t('image_size_error'));
+    }
+
+    if (!file.type.startsWith('image/')) {
+      return toast.error(t('invalid_image_error'));
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      const base64Image = reader.result as string;
+
+      if (!token) {
+        return toast.error(t('unauthorized_error'));
+      }
+
+      try {
+        setIsSaving(true);
+        const response = await updateUserImage(base64Image, token);
+        setUser(prev => (prev ? { ...prev, profilePhoto: response.profilePhoto } : null));
+        toast.success(t('profile_picture_updated'));
+      } catch (error: any) {
+        toast.error(error.response?.data?.error || t('failed_update_picture'));
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleSavePassword = async () => {
+    if (!newPassword) return toast.error(t('empty_password_error'));
+    if (!token || !id) return toast.error(t('unauthorized_error'));
+
+    try {
+      setIsSaving(true);
+      const response = await updatePassword(newPassword, token);
+      localStorage.setItem('id', response.user.id.toString());
+      toast.success(t('password_updated'));
+      setNewPassword('');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || t('failed_update_password'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveNickname = async () => {
+    if (!newNickname) return toast.error(t('empty_nickname_error'));
+    if (!token || !id) return toast.error(t('unauthorized_error'));
+    if (newNickname === user?.username) return toast.info(t('nickname_unchanged'));
+
+    try {
+      setIsSaving(true);
+      const response = await updateUsername(newNickname, token);
+      setUser(prev => (prev ? { ...prev, username: response.username } : null));
+      toast.success(t('nickname_updated'));
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || t('failed_update_nickname'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (!user) {
-    return <div className="min-h-screen bg-gray-100 flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen bg-gray-100 flex items-center justify-center">{t('loading')}</div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-6">
-      <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center animate-fade-in">
-        Profile
-      </h2>
+      {/* <LanguageSwitcher /> */}
+      <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center">{t('profile')}</h2>
 
-      {user ? (
-        <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-auto animate-fade-in">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-auto relative">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200"
+          aria-label={t('settings')}
+        >
           <img
-            src={user.profilePhoto || 'https://via.placeholder.com/150'}
-            alt={`${user.username}'s profile`}
-            className="w-40 h-40 rounded-full mx-auto mb-6 border-4 border-blue-300 shadow-md"
+            src="https://static-00.iconduck.com/assets.00/settings-icon-2048x2046-cw28eevx.png"
+            alt={t('settings')}
+            className="h-6 w-6"
           />
-          <div className="text-center text-gray-800 space-y-2">
-            <p><strong>Username:</strong> {user.username}</p>
-            <p><strong>Played:</strong> 0</p>
-            <p><strong>Wins:</strong> 0</p>
-            <p><strong>Joined:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-          </div>
+        </button>
 
-          {id && user.id !== parseInt(id) && (
-            <div className="mt-6 text-center space-x-2">
+        <img
+          src={user.profilePhoto || 'https://st3.depositphotos.com/19428878/37434/v/450/depositphotos_374342112-stock-illustration-default-avatar-profile-icon-vector.jpg'}
+          alt={`${user.username}'s profile`}
+          className="w-40 h-40 rounded-full mx-auto mb-6 border-4 border-blue-300 shadow-md"
+        />
+
+        <div className="text-center text-gray-800 space-y-2">
+          <p>
+            <strong>{t('username')}:</strong> {user.username}
+          </p>
+          <p>
+            <strong>{t('played')}:</strong> {stats?.games}
+          </p>
+          <p>
+            <strong>{t('wins')}:</strong> {stats?.wins}
+          </p>
+          <p>
+            <strong>{t('joined')}:</strong>{' '}
+            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
+          </p>
+        </div>
+
+        {id && user.id !== parseInt(id) && (
+          <div className="mt-6 text-center space-x-2">
+            <button
+              onClick={handleAddFriend}
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+            >
+              {t('add_friend')}
+            </button>
+            <button
+              onClick={handleBlockUser}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+            >
+              {t('block_user')}
+            </button>
+            {status && <p className="mt-2 text-green-600 font-medium">{status}</p>}
+          </div>
+        )}
+
+        <div className="mt-4 flex justify-center space-x-2">
+          <button
+            onClick={() => navigate('/ai')}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            {t('play_ai')}
+          </button>
+          <button
+            onClick={() => navigate('/pvp')}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            {t('play_user')}
+          </button>
+        </div>
+      </div>
+
+      {showSettings && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-semibold mb-4">{t('account_settings')}</h2>
+
+            <label className="block mb-2 font-medium">{t('profile_picture')}:</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleSaveImage}
+              className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring focus:border-blue-300"
+            />
+
+            <label className="block mb-2 font-medium">{t('change_nickname')}:</label>
+            <input
+              type="text"
+              value={newNickname}
+              onChange={e => setNewNickname(e.target.value)}
+              placeholder={t('enter_new_nickname')}
+              className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring focus:border-blue-300 Copa City"
+            />
+            <button
+              onClick={handleSaveNickname}
+              className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mb-4"
+              disabled={isSaving}
+            >
+              {isSaving ? t('saving') : t('save_nickname')}
+            </button>
+
+            <label className="block mb-2 font-medium">{t('change_password')}:</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder={t('enter_new_password')}
+              className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring focus:border-blue-300"
+            />
+            <button
+              onClick={handleSavePassword}
+              className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mb-4"
+              disabled={isSaving}
+            >
+              {isSaving ? t('saving') : t('save_password')}
+            </button>
+
+            <div className="flex justify-end">
               <button
-                onClick={handleAddFriend}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md"
+                onClick={() => setShowSettings(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
               >
-                Add Friend
+                {t('cancel')}
               </button>
-              <button
-                onClick={handleBlockUser}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md"
-              >
-                Block User
-              </button>
-              {status && <p className="mt-2 text-green-600 font-medium">{status}</p>}
             </div>
-          )}
-          <div className="mt-4">
-            <button onClick={openAI} className="bg-blue-500 text-white p-2 rounded mr-2">Play with AI</button>
-            <button onClick={openPVP} className="bg-blue-500 text-white p-2 rounded">Play with User</button>
           </div>
         </div>
-      ) : (
-        <p className="text-center text-gray-700">Loading...</p>
       )}
     </div>
   );
@@ -115,153 +279,24 @@ const Profile: React.FC = () => {
 
 export default Profile;
 
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { toast } from 'react-toastify';
 
-// interface User {
-//   id: string;
-//   username: string;
-// }
 
-// const Profile: React.FC = () => {
-//   const navigate = useNavigate();
-//   const [currentUser, setCurrentUser] = useState<User | null>(null);
-//   const [users, setUsers] = useState<User[]>([]);
-//   const [selectedOpponent, setSelectedOpponent] = useState<string>('');
 
-//   // Fetch current user data
-//   useEffect(() => {
-//     const fetchCurrentUser = async () => {
-//       try {
-//         // Replace with your actual API endpoint
-//         const response = await fetch('/api/users/me', {
-//           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-//         });
-//         if (!response.ok) throw new Error('Failed to fetch user');
-//         const data = await response.json();
-//         setCurrentUser({ id: data.id, username: data.username });
-//       } catch (error) {
-//         toast.error('Error fetching user data');
-//       }
-//     };
 
-//     const fetchUsers = async () => {
-//       try {
-//         // Replace with your actual API endpoint
-//         const response = await fetch('/api/users');
-//         if (!response.ok) throw new Error('Failed to fetch users');
-//         const data = await response.json();
-//         setUsers(data.users || []);
-//       } catch (error) {
-//         toast.error('Error fetching users');
-//       }
-//     };
 
-//     fetchCurrentUser();
-//     fetchUsers();
-//   }, []);
 
-//   const handlePlayWithAI = () => {
-//     if (!currentUser) {
-//       toast.error('Please log in to play');
-//       return;
-//     }
-//     navigate('/pong', { state: { player1Name: currentUser.username, player2Name: 'AI' } });
-//   };
 
-//   const handlePlayWithUser = () => {
-//     if (!currentUser) {
-//       toast.error('Please log in to play');
-//       return;
-//     }
-//     if (!selectedOpponent) {
-//       toast.error('Please select an opponent');
-//       return;
-//     }
-//     const opponent = users.find((user) => user.id === selectedOpponent);
-//     if (opponent) {
-//       navigate('/pong', { state: { player1Name: currentUser.username, player2Name: opponent.username } });
-//     } else {
-//       toast.error('Invalid opponent selected');
-//     }
-//   };
 
-//   const styles: { [key: string]: React.CSSProperties } = {
-//     container: {
-//       display: 'flex',
-//       flexDirection: 'column',
-//       alignItems: 'center',
-//       justifyContent: 'center',
-//       height: '100vh',
-//       background: 'linear-gradient(to bottom, #0f2027, #203a43, #2c5364)',
-//       color: '#eee',
-//       fontFamily: "'Segoe UI', Arial, sans-serif",
-//     },
-//     title: {
-//       fontSize: '32px',
-//       marginBottom: '20px',
-//     },
-//     button: {
-//       background: '#4caf50',
-//       border: 'none',
-//       color: 'white',
-//       padding: '10px 20px',
-//       borderRadius: '8px',
-//       cursor: 'pointer',
-//       fontWeight: 600,
-//       margin: '10px',
-//       transition: 'background 0.3s ease',
-//     },
-//     select: {
-//       padding: '8px',
-//       borderRadius: '8px',
-//       fontSize: '16px',
-//       margin: '10px',
-//       width: '200px',
-//     },
-//   };
 
-//   return (
-//     <div style={styles.container}>
-//       <h1 style={styles.title}>Welcome, {currentUser ? currentUser.username : 'Loading...'}</h1>
-//       <button
-//         style={styles.button}
-//         onClick={handlePlayWithAI}
-//         onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-//         onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-//         aria-label="Play with AI"
-//       >
-//         Play with AI
-//       </button>
-//       <div>
-//         <select
-//           style={styles.select}
-//           value={selectedOpponent}
-//           onChange={(e) => setSelectedOpponent(e.target.value)}
-//           aria-label="Select opponent"
-//         >
-//           <option value="">Select an opponent</option>
-//           {users
-//             .filter((user) => user.id !== currentUser?.id)
-//             .map((user) => (
-//               <option key={user.id} value={user.id}>
-//                 {user.username}
-//               </option>
-//             ))}
-//         </select>
-//         <button
-//           style={styles.button}
-//           onClick={handlePlayWithUser}
-//           onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-//           onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-//           aria-label="Play with user"
-//         >
-//           Play with User
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
 
-// export default Profile;
+
+
+
+
+
+
+
+
+
+
+

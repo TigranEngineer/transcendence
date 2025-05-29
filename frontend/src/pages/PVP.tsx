@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import * as BABYLON from '@babylonjs/core';
 import { getUser, getUserByUsername } from '../services/api';
 import { UserResponse } from '../types/auth';
+import { pvp } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 const SmartPong: React.FC = () => {
   const location = useLocation();
@@ -13,22 +15,68 @@ const SmartPong: React.FC = () => {
   const token = localStorage.getItem('token');
   const id = localStorage.getItem('id');
   const [user, setUser] = useState<UserResponse | null>(null);
+  const [user2, setUser2] = useState<UserResponse | null>(null);
   const [player1Score, setPlayer1Score] = useState(0);
   const [player2Score, setPlayer2Score] = useState(0);
   const [maxScore, setMaxScore] = useState(5);
   const [player1Name, setPlayer1Name] = useState('Гость');
-  const [player2Name, setPlayer2Name] = useState(location.state?.player2Name || 'Opponent');
+  const [player2Name, setPlayer2Name] = useState(location.state?.player2Name || '');
   const [showMenu, setShowMenu] = useState(true);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [winnerText, setWinnerText] = useState('');
-  const input = useRef<{ w: boolean; s: boolean; arrowup: boolean; arrowdown: boolean }>({ w: false, s: false, arrowup: false, arrowdown: false });
+  const [error, setError] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { t } = useTranslation();
+  const input = useRef<{ w: boolean; s: boolean; arrowup: boolean; arrowdown: boolean }>({
+    w: false,
+    s: false,
+    arrowup: false,
+    arrowdown: false,
+  });
   const lastWallHit = useRef<string | null>(null);
   const gameRunning = useRef(false);
   const isGamePaused = useRef(false);
   const leftPaddleVelocity = useRef(0);
   const rightPaddleVelocity = useRef(0);
 
-  // Fetch authenticated user for player1Name
+  // Optimized handleLogin to prevent unnecessary requests
+  const handleLogin = async () => {
+    if (!token) {
+      toast.error('Please log in to play');
+      navigate('/login');
+      return;
+    }
+
+    if (!user) {
+      setError('User data not loaded');
+      return;
+    }
+
+    if (!player2Name.trim()) {
+      setError('Please enter a player 2 username');
+      return;
+    }
+
+    if (player2Name.trim() === user.username) {
+      setError('You cannot play against yourself');
+      return;
+    }
+
+    try {
+      const userData2 = await getUserByUsername(token, player2Name.trim());
+      if (userData2) {
+        setUser2(userData2);
+        setError('');
+        setIsLoggedIn(true);
+      } else {
+        setError('User does not exist');
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'User does not exist');
+    }
+  };
+
+  // Fetch authenticated user
   useEffect(() => {
     const fetchUser = async () => {
       if (!token || !id) {
@@ -51,17 +99,20 @@ const SmartPong: React.FC = () => {
       }
     };
 
-    fetchUser();
+    // Only fetch if user is not already set
+    if (!user) {
+      fetchUser();
+    }
   }, [navigate, token, id, username]);
 
-  // Update player1Name when user is fetched
+  // Update player1Name when user changes
   useEffect(() => {
     if (user) {
       setPlayer1Name(user.username || 'Гость');
     }
   }, [user]);
 
-  // Обработчик установки лимита очков (Apply)
+  // Handle score limit application
   const applyScoreOnly = () => {
     const scoreInput = document.getElementById('scoreLimitInput') as HTMLInputElement;
     const value = parseInt(scoreInput.value);
@@ -72,7 +123,7 @@ const SmartPong: React.FC = () => {
     }
   };
 
-  // Обработчик старта игры (Start Game)
+  // Handle game start
   const applyScoreLimit = () => {
     const scoreInput = document.getElementById('scoreLimitInput') as HTMLInputElement;
     const value = parseInt(scoreInput.value);
@@ -84,7 +135,7 @@ const SmartPong: React.FC = () => {
     }
   };
 
-  // Обработчик перезапуска игры (Play Again)
+  // Handle game restart
   const handleRestart = () => {
     setPlayer1Score(0);
     setPlayer2Score(0);
@@ -97,7 +148,7 @@ const SmartPong: React.FC = () => {
     rightPaddleVelocity.current = 0;
   };
 
-  // Инициализация игры
+  // Initialize game
   useEffect(() => {
     if (!canvasRef.current || showMenu) return;
 
@@ -110,7 +161,9 @@ const SmartPong: React.FC = () => {
       maxScore,
       setWinner: (winner: string) => {
         setTimeout(() => {
-          setWinnerText(`${winner} wins!`);
+          if (!token || !user2) return;
+          pvp(token, user2.id, true);
+          setWinnerText(`${winner} ${t('win')}`);
           setShowWinnerScreen(true);
           gameRunning.current = false;
         }, 200);
@@ -133,16 +186,18 @@ const SmartPong: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (['w', 's', 'arrowup', 'arrowdown'].includes(key)) {
-        e.preventDefault(); // Prevent scrolling
+        e.preventDefault();
         input.current[key as keyof typeof input.current] = true;
       }
     };
+
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (key in input.current) {
         input.current[key as keyof typeof input.current] = false;
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
@@ -157,7 +212,7 @@ const SmartPong: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [showMenu, showWinnerScreen, player1Name, player2Name]);
+  }, [showMenu, showWinnerScreen, player1Name, player2Name, t]);
 
   const createScene = (
     engine: BABYLON.Engine,
@@ -345,6 +400,10 @@ const SmartPong: React.FC = () => {
       margin: 0,
       overflow: 'hidden',
       background: 'linear-gradient(to bottom, #0f2027, #203a43, #2c5364)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'column',
     },
     canvas: {
       width: '100%',
@@ -353,7 +412,7 @@ const SmartPong: React.FC = () => {
     },
     scoreboard: {
       position: 'absolute',
-      top: '10px',
+      top: '100px',
       left: '50%',
       transform: 'translateX(-50%)',
       color: 'white',
@@ -389,11 +448,12 @@ const SmartPong: React.FC = () => {
       fontSize: '16px',
       marginRight: '10px',
       outline: 'none',
+      color: 'black',
     },
     scoreLimitButton: {
       background: '#4caf50',
       border: 'none',
-      color: 'white',
+      color: 'black',
       padding: '7px 15px',
       borderRadius: '8px',
       cursor: 'pointer',
@@ -437,74 +497,164 @@ const SmartPong: React.FC = () => {
       cursor: 'pointer',
       transition: 'background-color 0.3s ease',
     },
+    loginContainer: {
+      backgroundColor: '#222',
+      padding: '30px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      width: '300px',
+    },
+    loginTitle: {
+      color: '#fff',
+      marginBottom: '20px',
+    },
+    input: {
+      width: '100%',
+      padding: '10px',
+      marginBottom: '15px',
+      borderRadius: '6px',
+      border: '1px solid #555',
+      backgroundColor: '#333',
+      color: '#fff',
+      fontSize: '16px',
+    },
+    loginButton: {
+      padding: '10px 20px',
+      backgroundColor: '#4caf50',
+      border: 'none',
+      borderRadius: '6px',
+      color: '#fff',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+    },
+    error: {
+      color: 'red',
+      marginTop: '10px',
+    },
   };
 
   return (
     <div style={styles.container}>
-      {showMenu && (
-        <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
-          <div style={{ fontSize: '20px', marginBottom: '15px' }}>Game Settings</div>
-          <div style={{ marginBottom: '10px' }}>
-            <span style={styles.scoreLimitLabel}>Player 1: {player1Name}</span>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <span style={styles.scoreLimitLabel}>Player 2: {player2Name}</span>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
-              Play to:
-            </label>
-            <input
-              type="number"
-              id="scoreLimitInput"
-              defaultValue={5}
-              min="1"
-              max="100"
-              step="1"
-              style={styles.scoreLimitInput}
-              aria-label="Set score limit"
-            />
-          </div>
-          <button
-            onClick={applyScoreOnly}
-            style={styles.scoreLimitButton}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-            aria-label="Apply score limit"
-          >
-            Apply
+      {!isLoggedIn ? (
+        <div style={styles.loginContainer}>
+          <h2 style={styles.loginTitle}>{t('log_in')}</h2>
+          <input
+            placeholder={t('login')}
+            value={player2Name}
+            onChange={(e) => setPlayer2Name(e.target.value)}
+            style={styles.input}
+          />
+          <button onClick={handleLogin} style={styles.loginButton}>
+            {t('log_in')}
           </button>
-          <button
-            onClick={applyScoreLimit}
-            style={styles.scoreLimitButton}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-            aria-label="Start game"
-          >
-            Start Game
-          </button>
-          <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
-            Current limit: {maxScore}
-          </span>
+          {error && <p style={styles.error}>{error}</p>}
         </div>
+      ) : (
+        <>
+          {showMenu && (
+            <>
+              <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
+                <div style={{ fontSize: '20px', marginBottom: '15px' }}>{t('game_set')}</div>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={styles.scoreLimitLabel}>
+                    {t('player')} 1: {player1Name}
+                  </span>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={styles.scoreLimitLabel}>
+                    {t('player')} 2: {player2Name}
+                  </span>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
+                    {t('play_to')}
+                  </label>
+                  <input
+                    type="number"
+                    id="scoreLimitInput"
+                    defaultValue={5}
+                    min="1"
+                    max="100"
+                    step="1"
+                    style={styles.scoreLimitInput}
+                    aria-label="Set score limit"
+                  />
+                </div>
+                <button
+                  onClick={applyScoreOnly}
+                  style={styles.scoreLimitButton}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                  aria-label="Apply score limit"
+                >
+                  {t('apply')}
+                </button>
+                <button
+                  onClick={applyScoreLimit}
+                  style={styles.scoreLimitButton}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                  aria-label="Start game"
+                >
+                  {t('sg')}
+                </button>
+                <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
+                  {t('curr_lim')} {maxScore}
+                </span>
+              </div>
+              <button
+                onClick={applyScoreOnly}
+                style={styles.scoreLimitButton}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                aria-label="Apply score limit"
+              >
+                {t('apply')}
+              </button>
+              <button
+                onClick={applyScoreLimit}
+                style={styles.scoreLimitButton}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                aria-label="Start game"
+              >
+                {t('start_game')}
+              </button>
+              <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
+                {t('curr_lim')} {maxScore}
+              </span>
+            </>
+          )}
+
+          <div id="winnerScreen" style={styles.winnerScreen}>
+            <div id="winnerText">{winnerText}</div>
+            <button
+              id="restartButton"
+              onClick={handleRestart}
+              style={styles.winnerButton}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
+              aria-label="Play again"
+            >
+              {t('play_again')}
+            </button>
+          </div>
+
+          <div id="scoreboard" style={styles.scoreboard}>
+            {player1Name}: {player1Score} | {player2Name}: {player2Score}
+          </div>
+
+          <canvas
+            id="renderCanvas"
+            ref={canvasRef}
+            style={styles.canvas}
+            aria-label="Pong game canvas"
+          />
+        </>
       )}
-      <div id="winnerScreen" style={styles.winnerScreen}>
-        <div id="winnerText">{winnerText}</div>
-        <button
-          id="restartButton"
-          onClick={handleRestart}
-          style={styles.winnerButton}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
-          aria-label="Play again"
-        >
-          Play Again
-        </button>
-      </div>
-      <div id="scoreboard" style={styles.scoreboard}>
-        {player1Name}: {player1Score} | {player2Name}: {player2Score}
-      </div>
-      <canvas id="renderCanvas" ref={canvasRef} style={styles.canvas} aria-label="Pong game canvas" />
     </div>
   );
 };

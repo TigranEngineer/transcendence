@@ -2,19 +2,32 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
+
+
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const [searchUsername, setSearchUsername] = useState('');
+  
+  const { t, i18n } = useTranslation();
+  
+  const LanguageSwitcher = () => (
+    <div className="flex gap-2">
+      <button onClick={() => i18n.changeLanguage('en')} aria-label="Switch to English">🇺🇸</button>
+      <button onClick={() => i18n.changeLanguage('fr')} aria-label="Switch to French">🇫🇷</button>
+      <button onClick={() => i18n.changeLanguage('ru')} aria-label="Switch to Russian">🇷🇺</button>
+    </div>
+  );
 
 
   const handleLogout = async () => {
     try {
-      await logout();
+      if (token) await logout();
       localStorage.removeItem('token');
       toast.success('Logged out successfully');
-      navigate('');
+      navigate('/');
     } catch (error) {
       toast.error('Logout failed');
     }
@@ -22,8 +35,9 @@ const Navbar: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchUsername) {
-      navigate(`/profile/${searchUsername}`);
+    const trimmed = searchUsername.trim();
+    if (trimmed) {
+      navigate(`/profile/${trimmed}`);
     }
     setSearchUsername('');
   };
@@ -34,6 +48,7 @@ const Navbar: React.FC = () => {
         <Link to="/" className="text-2xl font-extrabold tracking-wide hover:text-gray-200 transition duration-300">
           ft_transcendence
         </Link>
+        <LanguageSwitcher />
       </div>
 
       {token ? (
@@ -43,43 +58,55 @@ const Navbar: React.FC = () => {
               type="text"
               value={searchUsername}
               onChange={(e) => setSearchUsername(e.target.value)}
-              placeholder="Search username..."
+              placeholder={t('searchPlaceholder')}
               className="p-2 rounded-l-md text-black w-full sm:w-auto focus:outline-none"
+              aria-label="Search username"
             />
             <button
               type="submit"
               className="bg-white text-blue-600 font-semibold px-4 rounded-r-md hover:bg-gray-100 transition-all duration-300"
             >
-              Search
+              {t('searchButton')}
             </button>
           </form>
-
+          <Link
+            to="/2fa"
+            className="hover:text-gray-200 transition duration-300 font-medium"
+          >
+            TwoFactorAuth
+          </Link>
           <Link
             to="/profile"
             className="hover:text-gray-200 transition duration-300 font-medium"
           >
-            Profile
+            {t('profile')}
           </Link>
-          <Link
+          {/* <Link
             to="/chat"
             className="hover:text-gray-200 transition duration-300 font-medium"
           >
             Chat
-          </Link>
+          </Link> */}
           <button
             onClick={handleLogout}
             className="hover:text-gray-200 transition duration-300 font-medium"
           >
-            Logout
+             {t('logout')}
           </button>
         </div>
       ) : (
         <div className="flex gap-4">
+          <Link
+            to="/google-login"
+            className="hover:text-gray-200 transition duration-300 font-medium"
+          >
+            GoogleLogin
+          </Link>
           <Link to="/login" className="hover:text-gray-200 transition duration-300 font-medium">
-            Login
+          {t('login')}
           </Link>
           <Link to="/register" className="hover:text-gray-200 transition duration-300 font-medium">
-            Register
+          {t('register')}
           </Link>
         </div>
       )}

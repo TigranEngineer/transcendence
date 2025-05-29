@@ -5,27 +5,37 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+  // url      = "file:./data.db"
 }
 
 model UserAuth {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  userId   Int    @unique
+  id               Int     @id @default(autoincrement())
+  email            String  @unique
+  password         String?
+  userId           Int     @unique
+  twoFactorSecret  String? // Secret for TOTP-based 2FA
+  twoFactorEnabled Boolean @default(false) // Flag to indicate if 2FA is enabled
+  provider         String? // e.g., "google" or null for local
+  providerId       String? @unique // Unique ID from Google
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  username         String    @unique
-  email            String    @unique
+  id               Int                @id @default(autoincrement())
+  username         String             @unique
+  email            String             @unique
   profilePhoto     String?
-  createdAt        DateTime  @default(now())
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
-  friendsAsUser    Friends[] @relation("UserToFriends")
-  friendsAsFriend  Friends[] @relation("FriendToFriends")
-  blockedAsBlocker Blocked[] @relation("UserBlocked")
-  blockedAsBlocked Blocked[] @relation("UserBlockedBy")
+  createdAt        DateTime           @default(now())
+  sentMessages     Message[]          @relation("SentMessages")
+  receivedMessages Message[]          @relation("ReceivedMessages")
+  friendsAsUser    Friends[]          @relation("UserToFriends")
+  friendsAsFriend  Friends[]          @relation("FriendToFriends")
+  blockedAsBlocker Blocked[]          @relation("UserBlocked")
+  blockedAsBlocked Blocked[]          @relation("UserBlockedBy")
+  playerStats      PlayerStats? // Link to PlayerStats
+  matchesAsPlayer1 Match[]            @relation("Player1Matches")
+  matchesAsPlayer2 Match[]            @relation("Player2Matches")
+  matchesAsWinner  Match[]            @relation("WinnerMatches")
+  tournaments      TournamentPlayer[] @relation("TournamentParticipants")
 }
 
 model Friends {
@@ -58,4 +68,44 @@ model Message {
   createdAt  DateTime @default(now())
   sender     User     @relation("SentMessages", fields: [senderId], references: [id])
   receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+model PlayerStats {
+  id     Int  @id @default(autoincrement())
+  games  Int  @default(0)
+  wins   Int  @default(0)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model Tournament {
+  id        Int                @id @default(autoincrement())
+  hostId    Int
+  status    String             @default("ongoing") // e.g., "ongoing", "completed"
+  createdAt DateTime           @default(now())
+  matches   Match[]
+  players   TournamentPlayer[] @relation("TournamentPlayers")
+}
+
+model TournamentPlayer {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  userId       Int
+  tournament   Tournament @relation("TournamentPlayers", fields: [tournamentId], references: [id])
+  user         User       @relation("TournamentParticipants", fields: [userId], references: [id])
+
+  @@unique([tournamentId, userId])
+}
+
+model Match {
+  id           Int         @id @default(autoincrement())
+  tournamentId Int? // Made optional for standalone matches
+  player1Id    Int
+  player2Id    Int
+  winnerId     Int?
+  createdAt    DateTime    @default(now())
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
+  player1      User        @relation("Player1Matches", fields: [player1Id], references: [id])
+  player2      User        @relation("Player2Matches", fields: [player2Id], references: [id])
+  winner       User?       @relation("WinnerMatches", fields: [winnerId], references: [id])
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { register } from '../services/api';
 import { RegisterRequest } from '../types/auth';
+import { useTranslation } from 'react-i18next';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const Register: React.FC = () => {
     email: '',
     password: '',
   });
+  const { t, i18n } = useTranslation();
 
   console.log('Register component rendered'); // Debug log
 
@@ -40,12 +42,12 @@ const Register: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
         <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">
-          Register
+          {t('register')}
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="username" className="block text-gray-700 mb-2 font-medium">
-              Username
+            {t('username')}
             </label>
             <input
               type="text"
@@ -59,7 +61,7 @@ const Register: React.FC = () => {
           </div>
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 mb-2 font-medium">
-              Email
+            {t('email')}
             </label>
             <input
               type="email"
@@ -73,7 +75,7 @@ const Register: React.FC = () => {
           </div>
           <div className="mb-6">
             <label htmlFor="password" className="block text-gray-700 mb-2 font-medium">
-              Password
+            {t('password')}
             </label>
             <input
               type="password"
@@ -89,7 +91,7 @@ const Register: React.FC = () => {
             type="submit"
             className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-xl"
           >
-            Register
+            {t('register')}
           </button>
         </form>
       </div>
