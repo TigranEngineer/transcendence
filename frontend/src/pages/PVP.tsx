@@ -537,35 +537,40 @@ const SmartPong: React.FC = () => {
   };
 
   return (
-      <div style={styles.container}>
-        {!isLoggedIn ? (
-          <div style={styles.loginContainer}>
-            <h2 style={styles.loginTitle}>{t('log_in')}</h2>
-            <input
-              placeholder={t('login')}
-              value={player2Name}
-              onChange={(e) => setPlayer2Name(e.target.value)}
-              style={styles.input}
-            />
-            <button onClick={handleLogin} style={styles.loginButton}>
-              {t('log_in')}
-            </button>
-            {error && <p style={styles.error}>{error}</p>}
-          </div>
-        ) : (
-          <>
-            {showMenu && (
+    <div style={styles.container}>
+      {!isLoggedIn ? (
+        <div style={styles.loginContainer}>
+          <h2 style={styles.loginTitle}>{t('log_in')}</h2>
+          <input
+            placeholder={t('login')}
+            value={player2Name}
+            onChange={(e) => setPlayer2Name(e.target.value)}
+            style={styles.input}
+          />
+          <button onClick={handleLogin} style={styles.loginButton}>
+            {t('log_in')}
+          </button>
+          {error && <p style={styles.error}>{error}</p>}
+        </div>
+      ) : (
+        <>
+          {showMenu && (
+            <>
               <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
                 <div style={{ fontSize: '20px', marginBottom: '15px' }}>{t('game_set')}</div>
                 <div style={{ marginBottom: '10px' }}>
-                  <span style={styles.scoreLimitLabel}>{t('player')} 1: {player1Name}</span>
+                  <span style={styles.scoreLimitLabel}>
+                    {t('player')} 1: {player1Name}
+                  </span>
                 </div>
                 <div style={{ marginBottom: '10px' }}>
-                  <span style={styles.scoreLimitLabel}>{t('player')} 2: {player2Name}</span>
+                  <span style={styles.scoreLimitLabel}>
+                    {t('player')} 2: {player2Name}
+                  </span>
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                   <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
-                  {t('play_to')}
+                    {t('play_to')}
                   </label>
                   <input
                     type="number"
@@ -597,7 +602,7 @@ const SmartPong: React.FC = () => {
                   {t('sg')}
                 </button>
                 <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
-                {t('curr_lim')} {maxScore}
+                  {t('curr_lim')} {maxScore}
                 </span>
               </div>
               <button
@@ -621,7 +626,7 @@ const SmartPong: React.FC = () => {
               <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
                 {t('curr_lim')} {maxScore}
               </span>
-            </div>
+            </>
           )}
 
           <div id="winnerScreen" style={styles.winnerScreen}>
@@ -642,7 +647,12 @@ const SmartPong: React.FC = () => {
             {player1Name}: {player1Score} | {player2Name}: {player2Score}
           </div>
 
-          <canvas id="renderCanvas" ref={canvasRef} style={styles.canvas} aria-label="Pong game canvas" />
+          <canvas
+            id="renderCanvas"
+            ref={canvasRef}
+            style={styles.canvas}
+            aria-label="Pong game canvas"
+          />
         </>
       )}
     </div>
