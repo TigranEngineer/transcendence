@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { enable2FA, verify2FA, disable2FA } from '../services/api';
 import { Enable2FAResponse, Verify2FAResponse, Disable2FAResponse } from '../types/auth';
+import { useTranslation } from 'react-i18next';
 
 const TwoFactorAuth: React.FC = () => {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ const TwoFactorAuth: React.FC = () => {
     const [code, setCode] = useState('');
     const [isEnabled, setIsEnabled] = useState(false);
     const [loading, setLoading] = useState(false);
+    const { t, i18n } = useTranslation();
 
     useEffect(() => {
         const storedEnabled = localStorage.getItem('twoFactorEnabled');
@@ -78,9 +80,9 @@ const TwoFactorAuth: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center p-4">
             <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
-                <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">Two-Factor Authentication</h2>
+                <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">{t('enable_2FA')}</h2>
                 {isEnabled && !qrCodeUrl && (
-                    <p className="text-center text-green-600 mb-4">2FA is enabled. You can disable it below.</p>
+                    <p className="text-center text-green-600 mb-4">{t('2FA_is_enabled_You_can_disable_it_below')}</p>
                 )}
                 {!isEnabled && !qrCodeUrl && (
                     <button
@@ -88,14 +90,14 @@ const TwoFactorAuth: React.FC = () => {
                         disabled={loading}
                         className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-xl disabled:bg-gray-400"
                     >
-                        Enable 2FA
+                        {t('enable_2FA')}
                     </button>
                 )}
                 {qrCodeUrl && (
                     <div className="mb-4 text-center">
-                        <p>Scan this QR code with your authenticator app (e.g., Google Authenticator):</p>
+                        <p>{t('erkar')}:</p>
                         <img src={qrCodeUrl} alt="2FA QR Code" className="mx-auto my-4 w-48 h-48" />
-                        <p>Secret: {secret}</p>
+                        <p>{t('secret')}: {secret}</p>
                         <input
                             type="text"
                             value={code}
@@ -108,7 +110,7 @@ const TwoFactorAuth: React.FC = () => {
                             disabled={loading || code.length !== 6}
                             className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-xl mt-2 disabled:bg-gray-400"
                         >
-                            Verify
+                            {t('verify')}
                         </button>
                     </div>
                 )}
@@ -118,7 +120,7 @@ const TwoFactorAuth: React.FC = () => {
                         disabled={loading}
                         className="w-full bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-xl mt-4"
                     >
-                        Disable 2FA
+                        {t('Disable_2FA')}
                     </button>
                 )}
             </div>

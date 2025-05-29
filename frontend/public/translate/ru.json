@@ -54,5 +54,20 @@
   "dif": "Выберите сложность:",
   "easy": "легко",
   "normal": "нормально",
-  "hard": "сложно"
+  "hard": "сложно",
+  "enable_2FA": "Включить 2FA",
+  "Two_Factor_Authentication": "Двухфакторная аутентификация",
+  "2FA_is_enabled_You_can_disable_it_below": "2FA включена. Вы можете отключить её ниже",
+  "erkar": "Сканируйте этот QR-код в приложении-аутентификаторе (например, Google Authenticator)",
+  "verify": "Проверить",
+  "Disable_2FA": "Отключить 2FA",
+  "Google_Login": "Вход через Google",
+  "Sign_in_with_Google": "Войти через Google",
+  "Processing_Google_Sign_In": "Обработка входа через Google...",
+  "two_f": "Код 2FA",
+  "sg": "Начать игру",
+  "pong": "Добро пожаловать на турнир по Понгу!",
+  "password": "Пароль",
+  "email": "Электронная почта",
+  "secret": "Секрет"
 }

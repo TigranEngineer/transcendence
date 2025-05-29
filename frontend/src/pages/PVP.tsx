@@ -247,7 +247,7 @@ const SmartPong: React.FC = () => {
     rightPaddle.position.x = 13;
 
     const ball = BABYLON.MeshBuilder.CreateSphere('ball', { diameter: 1 }, scene);
-    let ballVelocity = new BABYLON.Vector3(0.4, 0, 0);
+    let ballVelocity = new BABYLON.Vector3(0.4, 0.1, 0);
 
     const wallMaterial = new BABYLON.StandardMaterial('wallMat', scene);
     wallMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.3);
@@ -412,10 +412,10 @@ const SmartPong: React.FC = () => {
     },
     scoreboard: {
       position: 'absolute',
-      top: '10px',
+      top: '100px',
       left: '50%',
       transform: 'translateX(-50%)',
-      color: 'black',
+      color: 'white',
       fontFamily: 'monospace',
       fontSize: '24px',
       zIndex: 1,
@@ -537,46 +537,68 @@ const SmartPong: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
-      {!isLoggedIn ? (
-        <div style={styles.loginContainer}>
-          <h2 style={styles.loginTitle}>{t('login')}</h2>
-          <input
-            placeholder={t('login')}
-            value={player2Name}
-            onChange={(e) => setPlayer2Name(e.target.value)}
-            style={styles.input}
-          />
-          <button onClick={handleLogin} style={styles.loginButton}>
-            {t('log_in')}
-          </button>
-          {error && <p style={styles.error}>{error}</p>}
-        </div>
-      ) : (
-        <>
-          {showMenu && (
-            <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
-              <div style={{ fontSize: '20px', marginBottom: '15px' }}>{t('game_set')}</div>
-              <div style={{ marginBottom: '10px' }}>
-                <span style={styles.scoreLimitLabel}>{t('player')} 1: {player1Name}</span>
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <span style={styles.scoreLimitLabel}>{t('player')} 2: {player2Name}</span>
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
+      <div style={styles.container}>
+        {!isLoggedIn ? (
+          <div style={styles.loginContainer}>
+            <h2 style={styles.loginTitle}>{t('log_in')}</h2>
+            <input
+              placeholder={t('login')}
+              value={player2Name}
+              onChange={(e) => setPlayer2Name(e.target.value)}
+              style={styles.input}
+            />
+            <button onClick={handleLogin} style={styles.loginButton}>
+              {t('log_in')}
+            </button>
+            {error && <p style={styles.error}>{error}</p>}
+          </div>
+        ) : (
+          <>
+            {showMenu && (
+              <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
+                <div style={{ fontSize: '20px', marginBottom: '15px' }}>{t('game_set')}</div>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={styles.scoreLimitLabel}>{t('player')} 1: {player1Name}</span>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={styles.scoreLimitLabel}>{t('player')} 2: {player2Name}</span>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
                   {t('play_to')}
-                </label>
-                <input
-                  type="number"
-                  id="scoreLimitInput"
-                  defaultValue={5}
-                  min="1"
-                  max="100"
-                  step="1"
-                  style={styles.scoreLimitInput}
-                  aria-label="Set score limit"
-                />
+                  </label>
+                  <input
+                    type="number"
+                    id="scoreLimitInput"
+                    defaultValue={5}
+                    min="1"
+                    max="100"
+                    step="1"
+                    style={styles.scoreLimitInput}
+                    aria-label="Set score limit"
+                  />
+                </div>
+                <button
+                  onClick={applyScoreOnly}
+                  style={styles.scoreLimitButton}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                  aria-label="Apply score limit"
+                >
+                  {t('apply')}
+                </button>
+                <button
+                  onClick={applyScoreLimit}
+                  style={styles.scoreLimitButton}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
+                  aria-label="Start game"
+                >
+                  {t('sg')}
+                </button>
+                <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
+                {t('curr_lim')} {maxScore}
+                </span>
               </div>
               <button
                 onClick={applyScoreOnly}

@@ -43,6 +43,12 @@ export interface Disable2FAResponse {
     games: number;
   }
 
+  export interface WinsAndGames
+  {
+    wins: number;
+    games: number;
+  }
+
   export interface RecordMatchResultRequest {
     matchId: number;
     winnerId: number;

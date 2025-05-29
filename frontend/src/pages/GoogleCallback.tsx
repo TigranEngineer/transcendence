@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const GoogleCallback: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t, i18n } = useTranslation();
 
     useEffect(() => {
         const query = new URLSearchParams(location.search);
@@ -29,7 +31,7 @@ const GoogleCallback: React.FC = () => {
         }
     }, [navigate, location]);
 
-    return <div className="text-center text-gray-500">Processing Google Sign-In...</div>;
+    return <div className="text-center text-gray-500">{t('Processing_Google_Sign_In')}</div>;
 };
 
 export default GoogleCallback;

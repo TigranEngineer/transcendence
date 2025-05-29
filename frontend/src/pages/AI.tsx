@@ -501,7 +501,7 @@ const SmartPong: React.FC = () => {
         id="scoreboard"
         style={{
           position: 'absolute',
-          top: '10px',
+          top: '100px',
           left: '50%',
           transform: 'translateX(-50%)',
           color: 'white',

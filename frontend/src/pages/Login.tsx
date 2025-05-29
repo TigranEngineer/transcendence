@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login } from '../services/api';
 import { LoginRequest, AuthResponse } from '../types/auth';
+import { useTranslation } from 'react-i18next';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Login: React.FC = () => {
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [show2FA, setShow2FA] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const { t, i18n } = useTranslation();
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -62,10 +64,10 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
-        <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">Login</h2>
+        <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center drop-shadow">{t('login')}</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 mb-2 font-medium">Email</label>
+            <label htmlFor="email" className="block text-gray-700 mb-2 font-medium">{t('email')}</label>
             <input
               type="email"
               id="email"
@@ -78,7 +80,7 @@ const Login: React.FC = () => {
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 mb-2 font-medium">Password</label>
+            <label htmlFor="password" className="block text-gray-700 mb-2 font-medium">{t('password')}</label>
             <input
               type="password"
               id="password"
@@ -92,7 +94,7 @@ const Login: React.FC = () => {
           </div>
           {show2FA && (
             <div className="mb-6">
-              <label htmlFor="twoFactorCode" className="block text-gray-700 mb-2 font-medium">2FA Code</label>
+              <label htmlFor="twoFactorCode" className="block text-gray-700 mb-2 font-medium">{t('two_f')}</label>
               <input
                 type="text"
                 id="twoFactorCode"
@@ -108,7 +110,7 @@ const Login: React.FC = () => {
             type="submit"
             className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-xl"
           >
-            Login
+            {t('login')}
           </button>
         </form>
       </div>
