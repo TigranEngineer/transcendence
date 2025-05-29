@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { createTournament, getNextMatch, recordMatchResult, recordVsPlayerMatch, getUserMatchHistory } from '../services/tournamentService';
+import { createTournament, getNextMatch, recordMatchResult, recordVsPlayerMatch, getUserMatchHistory, getPlayerStats } from '../services/tournamentService';
 
 interface CreateTournamentRequest {
   guestIds: number[];
@@ -13,6 +13,10 @@ interface RecordMatchResultRequest {
 interface PlayVsPlayerRequest {
   secondPlayerId: number;
   isHostWinner: boolean;
+}
+
+interface GetByIdParam {
+  userId: string;
 }
 
 export const createTournamentController = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -58,10 +62,19 @@ export const playVsPlayerController = async (request: FastifyRequest, reply: Fas
     
     const { secondPlayerId, isHostWinner } = request.body as PlayVsPlayerRequest;
     const hostId = (request.user as any).id;
-    console.log(`second player id = ${secondPlayerId}`);
-    console.log(`second player bool = ${isHostWinner}`);
     const result = await recordVsPlayerMatch(hostId, secondPlayerId, isHostWinner);
     reply.status(200).send({ message: 'Match recorded successfully', result });
+  } catch (error) {
+    reply.status(400).send({ error: (error as Error).message });
+  }
+};
+
+export const getPlayerStatsController = async (request: FastifyRequest<{ Params: GetByIdParam }>, reply: FastifyReply) => {
+  
+  try {
+    const userId = request.params.userId;
+    const result = await getPlayerStats(+userId);
+    reply.status(200).send(result);
   } catch (error) {
     reply.status(400).send({ error: (error as Error).message });
   }

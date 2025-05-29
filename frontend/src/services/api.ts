@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RegisterRequest, LoginRequest, AuthResponse, UserResponse, RecordMatchResultRequest } from '../types/auth';
+import { RegisterRequest, LoginRequest, WinsAndGames, AuthResponse, UserResponse, RecordMatchResultRequest } from '../types/auth';
 
 const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
@@ -110,21 +110,35 @@ export const googleLogin = async (): Promise<void> => {
 };
 
 
-export const pvp = async (token : string, secondPlayerId : number, isHostWinner : boolean): Promise<RecordMatchResultRequest> => {
+export const pvp = async (token: string, secondPlayerId: number, isHostWinner: boolean): Promise<RecordMatchResultRequest> => {
   try {
     console.log(`second player id = ${secondPlayerId}`);
     console.log(`second player bool = ${isHostWinner}`);
 
-    const response = await tournamentApi.post<RecordMatchResultRequest>('/api/tournament/play-vs-player', { secondPlayerId,  isHostWinner}, {
+    const response = await tournamentApi.post<RecordMatchResultRequest>('/api/tournament/play-vs-player', { secondPlayerId, isHostWinner }, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log('Login response:', response.data);
+    console.log('pvp response:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Login error:', error.response?.data || error.message);
+    console.error('pvp error:', error.response?.data || error.message);
     throw error;
   }
 };
+
+export const getStats = async (token: string, userId: string): Promise<WinsAndGames> => {
+  try {
+    const response = await tournamentApi.get<WinsAndGames>(`/api/tournament/playerStats/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('getStats response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('getStats error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 
 

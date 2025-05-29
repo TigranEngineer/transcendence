@@ -192,6 +192,21 @@ export const recordVsPlayerMatch = async (player1Id: number, player2Id: number, 
   return { matchId: match.id, winnerId };
 };
 
+export const getPlayerStats = async (userId: number) => {
+  let stats = await prisma.playerStats.findUnique({ where: { userId } });
+  if (!stats) {
+    stats = await prisma.playerStats.create({
+      data: {
+        userId,
+        games: 0,
+        wins: 0,
+      },
+    });
+  }
+  console.table(stats);
+  return stats;
+};
+
 export const getUserMatchHistory = async (userId: number) => {
   const matches = await prisma.match.findMany({
     where: {

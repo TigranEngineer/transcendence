@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getUser, getUserByUsername, addFriend, blockUser, updatePassword, updateUsername, updateUserImage } from '../services/api';
-import { UserResponse } from '../types/auth';
+import { getUser, getUserByUsername, getStats, addFriend, blockUser, updatePassword, updateUsername, updateUserImage } from '../services/api';
+import { UserResponse, WinsAndGames } from '../types/auth';
 import { useTranslation } from 'react-i18next';
 // import { LanguageSwitcher } from '../components/Navbar';
 
@@ -16,6 +16,7 @@ const Profile: React.FC = () => {
   const [newPassword, setNewPassword] = useState<string>('');
   const [newNickname, setNewNickname] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [stats, setStats] = useState<WinsAndGames | null>(null);
 
   const token = localStorage.getItem('token');
   const id = localStorage.getItem('id');
@@ -34,6 +35,10 @@ const Profile: React.FC = () => {
           ? await getUserByUsername(token, username)
           : await getUser(token, id);
         setUser(userData);
+        if (userData) {
+          const statsData = await getStats(token, userData.id.toString());
+          setStats(statsData);
+        }
         setNewNickname(userData.username);
       } catch (error: any) {
         toast.error(error.response?.data?.error || t('fetch_error'));
@@ -134,7 +139,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-6">
-       {/* <LanguageSwitcher /> */}
+      {/* <LanguageSwitcher /> */}
       <h2 className="text-3xl font-extrabold text-blue-700 mb-6 text-center">{t('profile')}</h2>
 
       <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md mx-auto relative">
@@ -161,10 +166,10 @@ const Profile: React.FC = () => {
             <strong>{t('username')}:</strong> {user.username}
           </p>
           <p>
-            <strong>{t('played')}:</strong> 0
+            <strong>{t('played')}:</strong> {stats?.games}
           </p>
           <p>
-            <strong>{t('wins')}:</strong> 0
+            <strong>{t('wins')}:</strong> {stats?.wins}
           </p>
           <p>
             <strong>{t('joined')}:</strong>{' '}
