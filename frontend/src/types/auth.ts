@@ -37,7 +37,14 @@ export interface Disable2FAResponse {
   message: string;
 }
 
-export interface RecordMatchResultRequest {
-  matchId: number;
-  winnerId: number;
-}
+  export interface WinsAndGames
+  {
+    wins: number;
+    games: number;
+  }
+
+  export interface RecordMatchResultRequest {
+    matchId: number;
+    winnerId: number;
+  }
+  

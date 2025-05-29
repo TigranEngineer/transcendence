@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getUser, getUserByUsername, addFriend, blockUser } from '../services/api';
 import { UserResponse } from '../types/auth';
+import { useTranslation } from 'react-i18next';
 
 
 import * as BABYLON from '@babylonjs/core';
@@ -25,6 +26,8 @@ const SmartPong: React.FC = () => {
   const [showDifficultyMenu, setShowDifficultyMenu] = useState(true);
   const [showScoreLimitContainer, setShowScoreLimitContainer] = useState(true);
   const [winner, setWinner] = useState<string | null>(null);
+
+  const { t, i18n } = useTranslation();
 
 
   // Настройки сложности AI
@@ -364,24 +367,24 @@ const SmartPong: React.FC = () => {
             zIndex: 20,
           }}
         >
-          <div>Выберите сложность:</div>
+          <div>{t('dif')}</div>
           <button
             style={buttonStyle}
             onClick={() => handleDifficultySelect('easy')}
           >
-            Легко
+            {t('easy')}
           </button>
           <button
             style={buttonStyle}
             onClick={() => handleDifficultySelect('medium')}
           >
-            Средне
+            {t('normal')}
           </button>
           <button
             style={buttonStyle}
             onClick={() => handleDifficultySelect('hard')}
           >
-            Сложно
+            {t('hard')}
           </button>
         </div>
       )}
@@ -409,7 +412,7 @@ const SmartPong: React.FC = () => {
             htmlFor="scoreLimitInput"
             style={{ fontWeight: 600, marginRight: '10px', fontSize: '16px' }}
           >
-            Play to:
+            {t('play_to')}
           </label>
           <input
             type="number"
@@ -426,6 +429,7 @@ const SmartPong: React.FC = () => {
               fontSize: '16px',
               marginRight: '10px',
               outline: 'none',
+              color: 'black',
             }}
           />
           <button
@@ -441,7 +445,7 @@ const SmartPong: React.FC = () => {
               transition: 'background 0.3s ease',
             }}
           >
-            Apply
+            {t('apply')}
           </button>
           <span
             id="scoreLimitDisplay"
@@ -452,7 +456,7 @@ const SmartPong: React.FC = () => {
               verticalAlign: 'middle',
             }}
           >
-            Current limit: {maxScore}
+            {t('curr_lim')} {maxScore}
           </span>
         </div>
       )}
@@ -474,7 +478,7 @@ const SmartPong: React.FC = () => {
             zIndex: 1000,
           }}
         >
-          <div id="winnerText">{winner} wins!</div>
+          <div id="winnerText">{winner} {t('win')}</div>
           <button
             id="restartButton"
             onClick={handleRestart}
@@ -489,7 +493,7 @@ const SmartPong: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            Play Again
+            {t('play_again')}
           </button>
         </div>
       )}
@@ -507,7 +511,7 @@ const SmartPong: React.FC = () => {
           display: showDifficultyMenu ? 'none' : 'block',
         }}
       >
-        {user?.username || 'Гость'}: {playerScore} | AI: {aiScore}
+        {user?.username || "Guest"}: {playerScore} | AI: {aiScore}
       </div>
       <div
         id="winnerMessage"

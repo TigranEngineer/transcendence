@@ -5,6 +5,7 @@ import * as BABYLON from '@babylonjs/core';
 import { getUser, getUserByUsername } from '../services/api';
 import { UserResponse } from '../types/auth';
 import { pvp } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 const SmartPong: React.FC = () => {
   const location = useLocation();
@@ -32,6 +33,7 @@ const SmartPong: React.FC = () => {
 
   const [error, setError] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { t, i18n } = useTranslation();
 
   
   const handleLogin = async () => {
@@ -41,7 +43,13 @@ const SmartPong: React.FC = () => {
       return;
     }
     setError('User does not exist');
-    if (player2Name.trim() && player2Name.trim() != username) {
+    if (!user)
+      return;
+    if (player2Name.trim()) {
+      if (player2Name.trim() == user.username){
+        setError('You cant write your login');
+        return ;
+      }
       setError('User does not exist');
       const userData2 = await getUserByUsername(token, player2Name);
       setUser2(userData2);
@@ -141,7 +149,7 @@ const SmartPong: React.FC = () => {
             return;
           // console
           pvp(token, user2.id, true);
-          setWinnerText(`${winner} wins!`);
+          setWinnerText(`${winner} ${t('win')}`);
           setShowWinnerScreen(true);
           gameRunning.current = false;
         }, 200);
@@ -392,7 +400,7 @@ const SmartPong: React.FC = () => {
       top: '10px',
       left: '50%',
       transform: 'translateX(-50%)',
-      color: 'white',
+      color: 'black',
       fontFamily: 'monospace',
       fontSize: '24px',
       zIndex: 1,
@@ -425,11 +433,12 @@ const SmartPong: React.FC = () => {
       fontSize: '16px',
       marginRight: '10px',
       outline: 'none',
+      color: 'black',
     },
     scoreLimitButton: {
       background: '#4caf50',
       border: 'none',
-      color: 'white',
+      color: 'black',
       padding: '7px 15px',
       borderRadius: '8px',
       cursor: 'pointer',
@@ -518,13 +527,13 @@ const SmartPong: React.FC = () => {
           <div style={styles.loginContainer}>
             <h2 style={styles.loginTitle}>Вход</h2>
             <input
-              placeholder="Логин"
+              placeholder={t('login')}
               value={player2Name}
               onChange={(e) => setPlayer2Name(e.target.value)}
               style={styles.input}
             />
             <button onClick={handleLogin} style={styles.loginButton}>
-              Войти
+              {t('log_in')}
             </button>
             {error && <p style={styles.error}>{error}</p>}
           </div>
@@ -532,16 +541,16 @@ const SmartPong: React.FC = () => {
           <>
             {showMenu && (
               <div id="scoreLimitContainer" style={styles.scoreLimitContainer}>
-                <div style={{ fontSize: '20px', marginBottom: '15px' }}>Game Settings</div>
+                <div style={{ fontSize: '20px', marginBottom: '15px' }}>{t('game_set')}</div>
                 <div style={{ marginBottom: '10px' }}>
-                  <span style={styles.scoreLimitLabel}>Player 1: {player1Name}</span>
+                  <span style={styles.scoreLimitLabel}>{t('player')} 1: {player1Name}</span>
                 </div>
                 <div style={{ marginBottom: '10px' }}>
-                  <span style={styles.scoreLimitLabel}>Player 2: {player2Name}</span>
+                  <span style={styles.scoreLimitLabel}>{t('player')} 2: {player2Name}</span>
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                   <label htmlFor="scoreLimitInput" style={styles.scoreLimitLabel}>
-                    Play to:
+                  {t('play_to')}
                   </label>
                   <input
                     type="number"
@@ -561,7 +570,7 @@ const SmartPong: React.FC = () => {
                   onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
                   aria-label="Apply score limit"
                 >
-                  Apply
+                  {t('apply')}
                 </button>
                 <button
                   onClick={applyScoreLimit}
@@ -570,10 +579,10 @@ const SmartPong: React.FC = () => {
                   onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
                   aria-label="Start game"
                 >
-                  Start Game
+                  {t('start_game')}
                 </button>
                 <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
-                  Current limit: {maxScore}
+                {t('curr_lim')} {maxScore}
                 </span>
               </div>
             )}
@@ -588,7 +597,7 @@ const SmartPong: React.FC = () => {
                 onMouseLeave={(e) => (e.currentTarget.style.background = '#4CAF50')}
                 aria-label="Play again"
               >
-                Play Again
+                {t('play_again')}
               </button>
             </div>
 
