@@ -56,8 +56,8 @@ services:
     environment:
       JWT_SECRET: "your-secret-key"
       DATABASE_URL: "file:./data.db"
-      GOOGLE_CLIENT_ID: "your-google-client-id"
-      GOOGLE_CLIENT_SECRET: "your-google-client-secret"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: "http://localhost:3001/api/auth/google/callback"
     ports:
       - "3001:3001"

@@ -106,10 +106,13 @@ export const authController = {
                 displayName: response.data.name,
             };
             const result = await authService.googleSignIn(googleUser);
-            return reply.send(result);
+            // Redirect to frontend with token and user ID as query parameters
+            const redirectUrl = `http://localhost:3003/auth/google/callback?token=${result.token}&userId=${result.user.id}`;
+            return reply.redirect(redirectUrl);
         } catch (error) {
             console.error('Google callback error:', error);
-            return reply.status(500).send({ error: 'Google Sign-In failed' });
+            // Redirect to login on error
+            return reply.redirect('http://localhost:3003/login?error=Google Sign-In failed');
         }
     },
 };

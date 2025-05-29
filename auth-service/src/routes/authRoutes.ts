@@ -16,7 +16,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       auth: oauth2.GOOGLE_CONFIGURATION,
     },
     startRedirectPath: '/api/auth/google',
-    callbackUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback',
+    callbackUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3003/api/auth/google/callback',
   });
 
   fastify.post('/api/auth/register', authController.register);
