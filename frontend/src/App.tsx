@@ -8,6 +8,9 @@ import Profile from './pages/Profile';
 import Chat from './components/Chat';
 import AI from './pages/AI';
 import PVP from './pages/PVP';
+import TwoFactorAuth from './pages/TwoFactorAuth';
+import GoogleLogin from './pages/GoogleLogin';
+import GoogleCallback from './pages/GoogleCallback';
 
 const App: React.FC = () => {
   return (
@@ -23,6 +26,9 @@ const App: React.FC = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/ai" element={<AI />} />
         <Route path="/pvp" element={<PVP />} />
+        <Route path="/2fa" element={<TwoFactorAuth />} />
+        <Route path="/google-login" element={<GoogleLogin />} />
+        <Route path="/auth/google/callback" element={<GoogleCallback />} />
       </Routes>
       <ToastContainerWrapper />
     </BrowserRouter>

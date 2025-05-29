@@ -9,10 +9,14 @@ datasource db {
 }
 
 model UserAuth {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  userId   Int    @unique
+  id               Int     @id @default(autoincrement())
+  email            String  @unique
+  password         String?
+  userId           Int     @unique
+  twoFactorSecret  String? // Secret for TOTP-based 2FA
+  twoFactorEnabled Boolean @default(false) // Flag to indicate if 2FA is enabled
+  provider         String? // e.g., "google" or null for local
+  providerId       String? @unique // Unique ID from Google
 }
 
 model User {

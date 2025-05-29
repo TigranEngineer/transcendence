@@ -54,7 +54,12 @@ const Navbar: React.FC = () => {
               Search
             </button>
           </form>
-
+          <Link
+            to="/2fa"
+            className="hover:text-gray-200 transition duration-300 font-medium"
+          >
+            TwoFactorAuth
+          </Link>
           <Link
             to="/profile"
             className="hover:text-gray-200 transition duration-300 font-medium"
@@ -76,6 +81,12 @@ const Navbar: React.FC = () => {
         </div>
       ) : (
         <div className="flex gap-4">
+          <Link
+            to="/google-login"
+            className="hover:text-gray-200 transition duration-300 font-medium"
+          >
+            GoogleLogin
+          </Link>
           <Link to="/login" className="hover:text-gray-200 transition duration-300 font-medium">
             Login
           </Link>
