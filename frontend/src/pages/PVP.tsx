@@ -16,6 +16,7 @@ const SmartPong: React.FC = () => {
   const id = localStorage.getItem('id');
   const [user, setUser] = useState<UserResponse | null>(null);
   const [user2, setUser2] = useState<UserResponse | null>(null);
+  const [players, setPlayers] = useState<(UserResponse | null)[]>([null, null, null]);
   const [player1Score, setPlayer1Score] = useState(0);
   const [player2Score, setPlayer2Score] = useState(0);
   const [maxScore, setMaxScore] = useState(5);
@@ -162,7 +163,11 @@ const SmartPong: React.FC = () => {
       setWinner: (winner: string) => {
         setTimeout(() => {
           if (!token || !user2) return;
-          pvp(token, user2.id, true);
+          
+          if (winner == user2.username)
+            pvp(token, user2.id, false);
+          else
+            pvp(token, user2.id, true);
           setWinnerText(`${winner} ${t('win')}`);
           setShowWinnerScreen(true);
           gameRunning.current = false;
@@ -605,27 +610,6 @@ const SmartPong: React.FC = () => {
                   {t('curr_lim')} {maxScore}
                 </span>
               </div>
-              <button
-                onClick={applyScoreOnly}
-                style={styles.scoreLimitButton}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-                aria-label="Apply score limit"
-              >
-                {t('apply')}
-              </button>
-              <button
-                onClick={applyScoreLimit}
-                style={styles.scoreLimitButton}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#45a049')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#4caf50')}
-                aria-label="Start game"
-              >
-                {t('start_game')}
-              </button>
-              <span id="scoreLimitDisplay" style={styles.scoreLimitDisplay}>
-                {t('curr_lim')} {maxScore}
-              </span>
             </>
           )}
 

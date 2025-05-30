@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RegisterRequest, LoginRequest, WinsAndGames, AuthResponse, UserResponse, RecordMatchResultRequest } from '../types/auth';
+import { RegisterRequest, LoginRequest, WinsAndGames, AuthResponse, UserResponse, RecordMatchResultRequest, Matchresponce } from '../types/auth';
 
 const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
@@ -139,7 +139,44 @@ export const getStats = async (token: string, userId: string): Promise<WinsAndGa
   }
 };
 
+export const createTournament = async (token: string, guestIds: number[]): Promise<number> => { 
+  try {
+    const response = await tournamentApi.post<number>('/api/tournament/create', { guestIds }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('tournament creation response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('tournament creation error:', error.response?.data || error.message);
+    throw error;
+  }
+};
 
+export const postMatchResult = async (token: string, matchId: number, winnerId: number): Promise<RecordMatchResultRequest> => { 
+  try {
+    const response = await tournamentApi.post<RecordMatchResultRequest>('/api/tournament/record-match', { matchId, winnerId }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('post match result response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('post match result error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getNextMatch = async (token: string, tournamentId: number): Promise<Matchresponce> => { 
+  try {
+    const response = await tournamentApi.post<Matchresponce>('/api/tournament/next-match', { tournamentId }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('get next match response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('get next match result error:', error.response?.data || error.message);
+    throw error;
+  }
+};
 
 
 
@@ -220,6 +257,20 @@ export const getUserByUsername = async (token: string, username: string): Promis
     return response.data;
   } catch (error: any) {
     console.error('getUserByUsername error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getFriends = async (token: string, id: string): Promise<{ id: number; username: string; profilePhoto?: string }[]> => {
+  try {
+    console.log(`get friends called`);
+    const response =  await userApi.get<{ id: number; username: string; profilePhoto?: string }[]>(`api/users/${id}/friends`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(`friend = ${response.data[0].username}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('getFriends error:', error.response?.data || error.message);
     throw error;
   }
 };

@@ -54,3 +54,18 @@ export interface Disable2FAResponse {
     winnerId: number;
   }
   
+  export interface Matchresponce {
+    matchId: number;
+    player1: number;
+    player2: number;
+  }
+  
+  export interface Friend {
+    id: number;
+    username: string;
+    profilePhoto?: string;
+  }
+  
+  export interface ExtendedUserResponse extends UserResponse {
+    friends?: Friend[];
+  }
