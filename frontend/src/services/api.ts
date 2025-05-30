@@ -261,6 +261,20 @@ export const getUserByUsername = async (token: string, username: string): Promis
   }
 };
 
+export const getFriends = async (token: string, id: string): Promise<{ id: number; username: string; profilePhoto?: string }[]> => {
+  try {
+    console.log(`get friends called`);
+    const response =  await userApi.get<{ id: number; username: string; profilePhoto?: string }[]>(`api/users/${id}/friends`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(`friend = ${response.data[0].username}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('getFriends error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const addFriend = async (id: string, friendId: number, token: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const response = await userApi.post(`/api/users/friends`, { id, friendId }, {
