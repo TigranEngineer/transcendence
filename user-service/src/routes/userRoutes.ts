@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { userController } from '../controllers/userController';
-import addFriend  from '../controllers/addFriendController';
-import blockUser  from '../controllers/blockUserController';
+import addFriend from '../controllers/addFriendController';
+import blockUser from '../controllers/blockUserController';
+import getFriends from '../controllers/getFriendsController';
 import { authenticate } from '../middlewares/authMiddleware';
 
 export async function userRoutes(fastify: FastifyInstance) {
@@ -12,4 +13,5 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.patch('/api/users/change/image', { preHandler: [authenticate] }, userController.changePhoto);
   fastify.post('/api/users/friends', addFriend);
   fastify.post('/api/users/block', blockUser);
+  fastify.get('/api/users/:id/friends', getFriends); // New route
 }

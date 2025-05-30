@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RegisterRequest, LoginRequest, WinsAndGames, AuthResponse, UserResponse, RecordMatchResultRequest } from '../types/auth';
+import { RegisterRequest, Friend, LoginRequest, WinsAndGames, AuthResponse, UserResponse, RecordMatchResultRequest } from '../types/auth';
 
 const USER_SERVICE_URL = 'http://localhost:3000';
 const AUTH_SERVICE_URL = 'http://localhost:3001';
@@ -220,6 +220,20 @@ export const getUserByUsername = async (token: string, username: string): Promis
     return response.data;
   } catch (error: any) {
     console.error('getUserByUsername error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getFriends = async (token: string, id: string): Promise<{ id: number; username: string; profilePhoto?: string }[]> => {
+  try {
+    console.log(`get friends called`);
+    const response =  await userApi.get<{ id: number; username: string; profilePhoto?: string }[]>(`api/users/${id}/friends`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(`friend = ${response.data[0].username}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('getFriends error:', error.response?.data || error.message);
     throw error;
   }
 };
