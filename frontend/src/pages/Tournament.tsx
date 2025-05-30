@@ -243,7 +243,6 @@ const handleLogin = async () => {
   const handleMatchEnd = (winner: string, score: string) => {
     setWinners((prev) => [...prev, winner]);
     console.log(`Match ended: ${winner} won ${score}, stage: ${currentMatch?.stage}`);
-	await postMatchResult(token, matchId, winner);
     if (engineRef.current) {
       engineRef.current.dispose();
       engineRef.current = null;
