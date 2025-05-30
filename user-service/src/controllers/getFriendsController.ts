@@ -7,7 +7,7 @@ interface GetByIdParam {
 
 async function getFriends(req: FastifyRequest<{ Params: GetByIdParam }>, reply: FastifyReply) {
     try {
-        const userId = parseInt(req.params.id); // Assuming userId is a route parameter
+        const userId = parseInt(req.params.id); 
         if (isNaN(userId)) {
             return reply.status(400).send({ error: 'Invalid user ID' });
         }

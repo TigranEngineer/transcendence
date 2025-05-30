@@ -148,35 +148,29 @@ export const recordMatchResult = async (matchId: number, winnerId: number) => {
     throw new Error('Winner must be one of the players');
   }
 
-  // Update match with winner
   await prisma.match.update({
     where: { id: matchId },
     data: { winnerId },
   });
 
-  // Update stats: both players played a game, winner gets a win
   await initializeOrUpdatePlayerStats(match.player1Id, { games: 1, wins: winnerId === match.player1Id ? 1 : 0 });
   await initializeOrUpdatePlayerStats(match.player2Id, { games: 1, wins: winnerId === match.player2Id ? 1 : 0 });
 
   return { matchId, winnerId };
 };
 
-// New function for Play vs Player
 export const recordVsPlayerMatch = async (player1Id: number, player2Id: number, isHostWinner: boolean) => {
   if (player1Id === player2Id) {
     throw new Error('Players must be different');
   }
 
-  // Validate players exist
   const players = await prisma.user.findMany({ where: { id: { in: [player1Id, player2Id] } } });
   if (players.length !== 2) {
     throw new Error('One or both players not found');
   }
 
-  // Determine winner
   const winnerId = isHostWinner ? player1Id : player2Id;
 
-  // Create match (no tournamentId since this is a standalone match)
   const match = await prisma.match.create({
     data: {
       player1Id,
@@ -185,7 +179,6 @@ export const recordVsPlayerMatch = async (player1Id: number, player2Id: number, 
     },
   });
 
-  // Update stats
   await initializeOrUpdatePlayerStats(player1Id, { games: 1, wins: isHostWinner ? 1 : 0 });
   await initializeOrUpdatePlayerStats(player2Id, { games: 1, wins: isHostWinner ? 0 : 1 });
 

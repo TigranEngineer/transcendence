@@ -5,7 +5,7 @@ async function blockUser(req: FastifyRequest, reply: FastifyReply) {
     try {
         const { id, blockedId } = req.body as { id: number, blockedId: number };
         console.log(`id = ${id}`);
-        console.log(`Block id = ${blockedId}`); // Assuming userId is in headers
+        console.log(`Block id = ${blockedId}`);
         if (!id) {
             return reply.status(401).send({ error: 'Unauthorized' });
         }

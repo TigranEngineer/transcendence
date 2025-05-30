@@ -114,12 +114,12 @@ export class UserService {
         include: {
           friendsAsUser: {
             include: {
-              friend: true, // Include the friend user details
+              friend: true,
             },
           },
           friendsAsFriend: {
             include: {
-              user: true, // Include the user details for reverse relationships
+              user: true, 
             },
           },
         },
@@ -127,7 +127,6 @@ export class UserService {
 
       if (!user) throw new Error('User not found');
 
-      // Combine friends from both directions and extract unique friend details
       const friends = [
         ...user.friendsAsUser.map(f => f.friend),
         ...user.friendsAsFriend.map(f => f.user),

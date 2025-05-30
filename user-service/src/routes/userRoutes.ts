@@ -13,5 +13,5 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.patch('/api/users/change/image', { preHandler: [authenticate] }, userController.changePhoto);
   fastify.post('/api/users/friends', addFriend);
   fastify.post('/api/users/block', blockUser);
-  fastify.get('/api/users/:id/friends', getFriends); // New route
+  fastify.get('/api/users/:id/friends', getFriends);
 }
