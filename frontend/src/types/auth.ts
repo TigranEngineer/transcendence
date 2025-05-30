@@ -54,3 +54,8 @@ export interface Disable2FAResponse {
     winnerId: number;
   }
   
+  export interface Matchresponce {
+    matchId: number;
+    player1: number;
+    player2: number;
+  }
