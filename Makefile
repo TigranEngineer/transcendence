@@ -8,7 +8,7 @@ red := \033[31m
 ifeq ($(UNAME), Darwin)
 	DOCKER_COMPOSE =  docker-compose
 else
-	DOCKER_COMPOSE =  sudo docker compose
+	DOCKER_COMPOSE =   docker compose
 endif
 
 all: up

@@ -343,7 +343,7 @@ const handleLogin = async () => {
       setWinner: (winner: string) => {
         console.log(`Winner set: ${winner}`);
         setTimeout(() => {
-          setWinnerText(`${winner} ${t('win')}`);
+          setWinnerText(`${winner}`);
           setShowWinnerScreen(true);
           gameRunning.current = false;
           isGamePaused.current = true;
